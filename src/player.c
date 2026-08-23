@@ -28,6 +28,7 @@ static unsigned short lookblock_breakticks_total;
 static Mesh crosshair_mesh;
 static Texture crosshair_textures[9];
 static Mesh sky_mesh;
+static Mesh test_icon_mesh;
 static Mesh inventory_mesh, hotbar_mesh;
 
 static int in_menu;
@@ -52,6 +53,8 @@ void initialize_player() {
 	crosshair_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 64, crosshair_textures[0]);
 
 	sky_mesh = create_sky_mesh();
+
+	test_icon_mesh = create_mesh_from_obj("res/biped.obj", load_texture("res/biped_jenny.png"));
 
 	inventory_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 256 * GUI_SCALE, load_texture("res/inventory.png"));
 
@@ -228,4 +231,6 @@ void player_process_tick(Input *input) {
 	}
 
 	draw_sprite_mesh(hotbar_mesh);
+
+	draw_mesh_as_icon(test_icon_mesh, 0.0f, 0.0f);
 }

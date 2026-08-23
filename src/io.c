@@ -48,6 +48,32 @@ static const char *fragment3D =
 	"if (outColor.a == 0) { discard; }" // texture clip transparency
 "}";
 
+static const char *vertex3DIcon =
+"#version 150 core\n"
+"uniform mat4 position_matrix;\n"
+"in vec3 position;\n"
+"in vec3 normal;\n"
+"in vec2 UV;\n"
+"out vec3 normal_camera;\n"
+"out vec2 frag_UV;\n"
+"void main() {\n"
+    "gl_Position = position_matrix * vec4(position.xyz, 1.0);\n" // get final position
+    "normal_camera = normal;\n" // pass along normal
+    "frag_UV = UV;\n" // pass along UV
+"}";
+
+static const char *fragment3DIcon =
+"#version 150 core\n"
+"uniform sampler2D tex;\n"
+"in vec3 normal_camera;\n"
+"in vec2 frag_UV;\n"
+"out vec4 outColor;\n"
+"void main() {\n"
+	"float c = dot(normal_camera, vec3(0.436, 0.9, 0)) * 0.3 + 0.7;\n"
+	"outColor = texture(tex, frag_UV) * vec4(c, c, c, 1.0);\n"
+	"if (outColor.a == 0) { discard; }" // texture clip transparency
+"}";
+
 static const char *vertexSky =
 "#version 150 core\n"
 "in vec2 position;\n"
@@ -94,6 +120,7 @@ static const char *fragment2D =
 }
 
 static GLuint shader3D_program;
+static GLuint shader3DIcon_program;
 static GLuint shaderSky_program;
 static GLuint shader2D_program;
 
@@ -161,6 +188,7 @@ void initialize_io() {
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
     create_shader_program(&shader3D_program, vertex3D, fragment3D);
+	create_shader_program(&shader3DIcon_program, vertex3DIcon, fragment3DIcon);
 	create_shader_program(&shaderSky_program, vertexSky, fragmentSky);
 	create_shader_program(&shader2D_program, vertex2D, fragment2D);
 }
@@ -668,6 +696,42 @@ void draw_mesh(const Transform *camera, const Transform *transform, const Mesh m
 	glUseProgram(shader3D_program);
 	glUniformMatrix4fv(glGetUniformLocation(shader3D_program, "position_matrix"), 1, GL_FALSE, &position_matrix[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shader3D_program, "normal_matrix"), 1, GL_FALSE, &normal_matrix[0][0]);
+
+	// draw
+	glDrawArrays(GL_TRIANGLES, 0, ((MeshGL *) mesh)->vertex_count);
+}
+
+void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v) {
+
+	// bind the mesh's vertex mesh and texture
+	glBindVertexArray(((MeshGL *) mesh)->vertex_array);
+	glBindTexture(GL_TEXTURE_2D, ((MeshGL *) mesh)->texture_gl->obj);
+
+	// model matrix (moves the model away from the camera and shrinks it)
+	GLfloat view_matrix[4][4] = {
+		{0.01, 0, 0, 0},
+		{0, 0.01, 0, 0},
+		{0, 0, 0.01, 0},
+		{0, 0, -0.2, 1}
+	};
+
+	// translation matrix (applied after projection matrix to position the icon in 2D screen space)
+	GLfloat translation_matrix[4][4] = {
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{screen_u, screen_v, 0, 1}
+	};
+
+	// final position matrix
+	GLfloat position_matrix[4][4];
+
+	mat4_mult(translation_matrix, PROJ_MATRIX, position_matrix);
+	mat4_mult(position_matrix, view_matrix, position_matrix);
+
+	// load the 3D shader program and the uniforms we just calculated
+	glUseProgram(shader3DIcon_program);
+	glUniformMatrix4fv(glGetUniformLocation(shader3DIcon_program, "position_matrix"), 1, GL_FALSE, &position_matrix[0][0]);
 
 	// draw
 	glDrawArrays(GL_TRIANGLES, 0, ((MeshGL *) mesh)->vertex_count);
