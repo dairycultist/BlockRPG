@@ -10,6 +10,6 @@
 
 #define FOV 90
 
-#define DEBUG_NOCLIP
+// #define DEBUG_NOCLIP
 
 #endif

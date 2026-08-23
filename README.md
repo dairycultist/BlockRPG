@@ -1,4 +1,4 @@
-# CinnamonCraft
+# BlockRPG
 
 Open source singleplayer voxel game written in C + OpenGL.
 

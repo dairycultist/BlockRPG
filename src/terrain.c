@@ -14,10 +14,8 @@ unsigned int r_hash(unsigned int seed) {
     return seed;
 }
 
+// technically we don't need this since blocks are never at negative positions, but whatever
 #define SAFEMOD(a, b) ((((a) % (b)) + b) % b)
-
-#define MASK_FULLBLOCK 0b00000001
-#define MASK_COLLIDABLE 0b00000010
 
 // block mesh types
 #define MESH_EMPTY 0
@@ -25,24 +23,15 @@ unsigned int r_hash(unsigned int seed) {
 
 typedef struct {
 
-	// dx, dy, and dz can be assumed to ALWAYS have the range [0, 1]
-	int (*does_local_point_collide)(float dx, float dy, float dz);
-
 	// TODO stuff like:
 	// - mining level
 	// - dropped item
 	// - orientation (used by append_block_to_mesh)
 	// - vanilla metadata
 
-	// 1 "fullblock": adjacent blocks will cull the faces that touch it
-	// 2 "collidable": has full-block collision
-	// 4
-	// 8
-	// 16
-	// 32
-	// 64
-	// 128
-	unsigned char flags;
+	unsigned char is_fullblock; // adjacent blocks will cull the faces that touch it
+	unsigned char is_collidable; // has full-block collision
+
 	unsigned short ticks_to_break;
 
 	// first element is always the mesh type
@@ -66,23 +55,13 @@ static Chunk chunks[WORLD_CHUNK_DIM][WORLD_CHUNK_DIM];
 
 static EZArray delayed_remesh_chunks; // stores Chunk *; when you want to set a bunch of blocks, remeshing after each is slow and redundant, so you save them to remesh once at the end
 
-static int full_block_collider(float dx, float dy, float dz) {
-
-	return 1;
-}
-
 // block type registry
 static BlockType block_types[256] = {
 
 	[ BLOCK_AIR ]	= (BlockType) { 0 },
-	[ BLOCK_GRASS ]	= (BlockType) { full_block_collider, 0b00000011, 60, { MESH_TOP_AND_BOTTOM, 0, 1, 2 } },
-	[ BLOCK_STONE ]	= (BlockType) { full_block_collider, 0b00000011, 20, { MESH_TOP_AND_BOTTOM, 3, 3, 3 } }
+	[ BLOCK_GRASS ]	= (BlockType) { 1, 1, 20, { MESH_TOP_AND_BOTTOM, 0, 1, 2 } },
+	[ BLOCK_STONE ]	= (BlockType) { 1, 1, 60, { MESH_TOP_AND_BOTTOM, 3, 3, 3 } }
 };
-
-static inline int is_block_fullblock(block_t block) {
-
-	return block_types[block].flags & MASK_FULLBLOCK;
-}
 
 static inline unsigned char get_block_mesh_data(block_t block, int i) {
 
@@ -101,7 +80,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	float u_sml, v_sml, u_big, v_big;
 
 	// -x face
-	if (!is_block_fullblock(get_block_at(x - 1, y, z))) {
+	if (!block_types[(get_block_at(x - 1, y, z))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[0], u_sml, v_sml, u_big, v_big);
 
@@ -119,7 +98,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 
 	// +x face
-	if (!is_block_fullblock(get_block_at(x + 1, y, z))) {
+	if (!block_types[(get_block_at(x + 1, y, z))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[1], u_sml, v_sml, u_big, v_big);
 
@@ -137,7 +116,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 
 	// -z face
-	if (!is_block_fullblock(get_block_at(x, y, z - 1))) {
+	if (!block_types[(get_block_at(x, y, z - 1))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[2], u_sml, v_sml, u_big, v_big);
 
@@ -155,7 +134,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 
 	// +z face
-	if (!is_block_fullblock(get_block_at(x, y, z + 1))) {
+	if (!block_types[(get_block_at(x, y, z + 1))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[3], u_sml, v_sml, u_big, v_big);
 
@@ -173,7 +152,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 
 	// -y face
-	if (!is_block_fullblock(get_block_at(x, y - 1, z))) {
+	if (!block_types[(get_block_at(x, y - 1, z))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[4], u_sml, v_sml, u_big, v_big);
 
@@ -191,7 +170,7 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 
 	// +y face
-	if (!is_block_fullblock(get_block_at(x, y + 1, z))) {
+	if (!block_types[(get_block_at(x, y + 1, z))].is_fullblock) {
 
 		GET_SPRITEMAP_UV(faces[5], u_sml, v_sml, u_big, v_big);
 
@@ -363,23 +342,16 @@ void remesh_delayed_chunks() {
 	clear_ezarray(&delayed_remesh_chunks);
 }
 
-int does_point_intersect_blocks(float x, float y, float z) {
+int does_point_intersect_blocks(int x, int y, int z) {
 
-	BlockType *block_type = &block_types[get_block_at(floor(x), floor(y), floor(z))];
-
-	return (block_type->flags & MASK_COLLIDABLE) && block_type->does_local_point_collide(
-		fmod(fmod(x, 1.0) + 1.0, 1.0),
-		fmod(fmod(y, 1.0) + 1.0, 1.0),
-		fmod(fmod(z, 1.0) + 1.0, 1.0)
-	);
+	return block_types[get_block_at(x, y, z)].is_collidable;
 }
 
 int does_aabb_intersect_blocks(AABB *aabb) {
 
-	//                                                                     V for float imprecision from        V this
-	for (float block_x = aabb->x - aabb->r; block_x <= aabb->x + aabb->r + AABB_COLLISION_DS * 0.5; block_x += AABB_COLLISION_DS) {
-	for (float block_z = aabb->z - aabb->r; block_z <= aabb->z + aabb->r + AABB_COLLISION_DS * 0.5; block_z += AABB_COLLISION_DS) {
-	for (float block_y = aabb->y;           block_y <= aabb->y + aabb->h + AABB_COLLISION_DS * 0.5; block_y += AABB_COLLISION_DS) {
+	for (int block_x = (int) (aabb->x - aabb->r); block_x <= (int) (aabb->x + aabb->r); block_x++) {
+	for (int block_z = (int) (aabb->z - aabb->r); block_z <= (int) (aabb->z + aabb->r); block_z++) {
+	for (int block_y = (int) aabb->y;             block_y <= (int) (aabb->y + aabb->h); block_y++) {
 
 		if (does_point_intersect_blocks(block_x, block_y, block_z))
 			return 1;
@@ -392,22 +364,15 @@ int would_aabb_intersect_block_at(int x, int y, int z, block_t block, AABB *aabb
 
 	BlockType *block_type = &block_types[block];
 
-	if (!(block_type->flags & MASK_COLLIDABLE))
+	if (!(block_type->is_collidable))
 		return 0;
 
 	float aabb_x = aabb->x - x;
 	float aabb_y = aabb->y - y;
 	float aabb_z = aabb->z - z;
 
-	for (float dx = fmax(0, aabb_x - aabb->r); dx <= fmin(1, aabb_x + aabb->r); dx += AABB_COLLISION_DS) {
-	for (float dz = fmax(0, aabb_z - aabb->r); dz <= fmin(1, aabb_z + aabb->r); dz += AABB_COLLISION_DS) {
-	for (float dy = fmax(0, aabb_y);           dy <= fmin(1, aabb_y + aabb->h); dy += AABB_COLLISION_DS) {
-
-		if (block_type->does_local_point_collide(dx, dy, dz))
-			return 1;
-	}}}
-
-	return 0;
+	return (aabb_x - aabb->r < 1.0) && (aabb_z - aabb->r < 1.0) && (aabb_y < 1.0)
+		&& (aabb_x + aabb->r > 0.0) && (aabb_z + aabb->r > 0.0) && (aabb_y + aabb->h > 0.0);
 }
 
 // returns true if it hit a block, in which case it populates the output parameters with the position of the block

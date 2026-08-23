@@ -14,8 +14,8 @@ int main() {
 	initialize_entities();
 	initialize_player();
 
-	for (int x = 0; x < 16; x++) {
-	for (int z = 0; z < 16; z++) {
+	for (int x = 0; x < WORLD_CHUNK_DIM * 16; x++) {
+	for (int z = 0; z < WORLD_CHUNK_DIM * 16; z++) {
 
 			set_delay_remesh_block_at(x, 20, z, BLOCK_GRASS);
 
