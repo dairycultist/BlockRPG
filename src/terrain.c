@@ -20,6 +20,7 @@ unsigned int r_hash(unsigned int seed) {
 // block mesh types
 #define MESH_EMPTY 0
 #define MESH_TOP_AND_BOTTOM 1
+#define MESH_DIRT_GRASS 2
 
 typedef struct {
 
@@ -59,8 +60,8 @@ static EZArray delayed_remesh_chunks; // stores Chunk *; when you want to set a 
 static BlockType block_types[256] = {
 
 	[ BLOCK_AIR ]	= (BlockType) { 0 },
-	[ BLOCK_GRASS ]	= (BlockType) { 1, 1, 20, { MESH_TOP_AND_BOTTOM, 0, 1, 2 } },
-	[ BLOCK_STONE ]	= (BlockType) { 1, 1, 60, { MESH_TOP_AND_BOTTOM, 3, 3, 3 } }
+	[ BLOCK_GRASS ]	= (BlockType) { 1, 1, 20, { MESH_DIRT_GRASS, 0, 1, 2 } },
+	[ BLOCK_STONE ]	= (BlockType) { 1, 1, 60, { MESH_TOP_AND_BOTTOM, 3 } }
 };
 
 static inline unsigned char get_block_mesh_data(block_t block, int i) {
@@ -195,16 +196,37 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 	switch (get_block_mesh_data(block, 0)) {
 
 		case MESH_EMPTY: return;
-		case MESH_TOP_AND_BOTTOM: helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
-				get_block_mesh_data(block, 2),
-				get_block_mesh_data(block, 2),
-				get_block_mesh_data(block, 2),
-				get_block_mesh_data(block, 2),
-				get_block_mesh_data(block, 3),
+		case MESH_TOP_AND_BOTTOM:
+			helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
+				get_block_mesh_data(block, 1),
+				get_block_mesh_data(block, 1),
+				get_block_mesh_data(block, 1),
+				get_block_mesh_data(block, 1),
+				get_block_mesh_data(block, 1),
 				get_block_mesh_data(block, 1)
 			});
 			return;
-
+		case MESH_DIRT_GRASS:
+			if (block_types[get_block_at(x, y + 1, z)].is_fullblock) {
+				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 3)
+				});
+			} else {
+				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
+					get_block_mesh_data(block, 2),
+					get_block_mesh_data(block, 2),
+					get_block_mesh_data(block, 2),
+					get_block_mesh_data(block, 2),
+					get_block_mesh_data(block, 3),
+					get_block_mesh_data(block, 1)
+				});
+			}
+			return;
 	}
 }
 
