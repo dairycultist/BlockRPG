@@ -1,6 +1,5 @@
 #include "main.h"
 #include "io.h"
-#include "conn.h"
 #include "terrain.h"
 #include "player.h"
 
@@ -14,126 +13,21 @@ int main() {
 	initialize_terrain();
 	initialize_entities();
 	initialize_player();
-	initialize_conn();
 
-    send_packet(PKT_PRE_LOGIN, (Packet) { .pre_login = { "Steve" } });
-    send_packet(PKT_LOGIN, (Packet) { .login = { 14, "Steve" } });
+	for (int x = 0; x < 16; x++) {
+	for (int z = 0; z < 16; z++) {
+
+			set_delay_remesh_block_at(x, 20, z, BLOCK_GRASS);
+
+			for (int y = 0; y < 20; y++) {
+				set_delay_remesh_block_at(x, y, z, BLOCK_STONE);
+			}
+	}}
+	remesh_delayed_chunks();
 
 	Input input = { 0 };
 
-	int frames_until_tick = 3;
-
 	while (game_is_running()) {
-
-		if (--frames_until_tick == 0) {
-
-			frames_until_tick = 3;
-
-			// drain the packet queue every tick
-			int limit = 20;
-
-			Packet packet;
-			packet_t type;
-			
-			while (--limit > 0 && (type = read_packet(&packet)) != PKT_EOB) {
-				
-				printf("Got packet: 0x%02x\n", type);
-
-				if (type == PKT_SET_CHUNK_VISIBILITY) {
-
-					if (packet.set_chunk_visibility.load)
-						create_chunk_at(packet.set_chunk_visibility.x, packet.set_chunk_visibility.z);
-					else
-						destroy_chunk_at(packet.set_chunk_visibility.x, packet.set_chunk_visibility.z);
-
-				} else if (type == PKT_CHUNK) {
-
-					for (int x = 0; x <= packet.chunk.w; x++) {
-					for (int z = 0; z <= packet.chunk.l; z++) {
-					for (int y = 0; y <= packet.chunk.h; y++) {
-
-						if (packet.chunk.blocks[y + (z + x * packet.chunk.l) * packet.chunk.h])
-							set_delay_remesh_block_at(
-								x + packet.chunk.x,
-								y + packet.chunk.y,
-								z + packet.chunk.z,
-								BLOCK_GRASS
-							);
-					}}}
-					remesh_delayed_chunks();
-				
-					free(packet.chunk.blocks);
-					free(packet.chunk.block_datas);
-					free(packet.chunk.block_lights);
-					free(packet.chunk.sky_lights);
-
-				} else if (type == PKT_SET_MULTIPLE_BLOCKS) {
-
-					for (int i = 0; i < packet.set_multiple_blocks.block_count; i++)
-						set_delay_remesh_block_at(
-							((packet.set_multiple_blocks.block_positions[i] >> 12) & 0x0F) + 16 * packet.set_multiple_blocks.x,
-							((packet.set_multiple_blocks.block_positions[i]      ) & 0xFF) + 16 * packet.set_multiple_blocks.z,
-							((packet.set_multiple_blocks.block_positions[i] >>  8) & 0x0F),
-							BLOCK_GRASS
-						);
-
-					remesh_delayed_chunks();
-
-					free(packet.set_multiple_blocks.block_positions);
-					free(packet.set_multiple_blocks.blocks);
-					free(packet.set_multiple_blocks.block_metadatas);
-
-				} else if (type == PKT_SET_BLOCK) {
-
-					set_block_at(packet.set_block.x, packet.set_block.y, packet.set_block.z, BLOCK_GRASS);
-				
-				} else if (type == PKT_PLAYER_POSITION_AND_ROTATION) {
-
-					set_player_position(packet.player_position_and_rotation.x, packet.player_position_and_rotation.y, packet.player_position_and_rotation.z);
-					set_player_rotation(packet.player_position_and_rotation.yaw, packet.player_position_and_rotation.pitch);
-				
-				} else if (type == PKT_SPAWN_PLAYER) {
-
-					Entity *entity = create_entity_with_id(packet.spawn_player.entity_id);
-
-					if (entity) {
-
-						entity->meshes[0] = create_mesh_from_obj("res/biped.obj", load_texture("res/biped_jenny.png"));
-						entity->aabb.x = ((float) packet.spawn_player.x) / 16.0;
-						entity->aabb.y = ((float) packet.spawn_player.y) / 16.0;
-						entity->aabb.z = ((float) packet.spawn_player.z) / 16.0;
-
-					} else {
-
-						printf("Entity limit exceeded!\n");
-					}
-					
-				} else if (type == PKT_SPAWN_MOB) {
-
-					Entity *entity = create_entity_with_id(packet.spawn_mob.entity_id);
-
-					if (entity) {
-
-						entity->meshes[0] = create_mesh_from_obj("res/biped.obj", load_texture("res/biped_jenny.png"));
-						entity->aabb.x = ((float) packet.spawn_mob.x) / 16.0;
-						entity->aabb.y = ((float) packet.spawn_mob.y) / 16.0;
-						entity->aabb.z = ((float) packet.spawn_mob.z) / 16.0;
-
-					} else {
-
-						printf("Entity limit exceeded!\n");
-					}
-				}
-			}
-
-			// send packets
-			float x, y, z, camera_y, yaw, pitch;
-			int grounded;
-
-			get_player_information(&x, &y, &z, &camera_y, &yaw, &pitch, &grounded);
-
-			send_packet(PKT_PLAYER_POSITION_AND_ROTATION, (Packet) { .player_position_and_rotation = { x, camera_y, y, z, yaw, pitch, grounded } });
-		}
 
 		populate_input(&input);
 		
@@ -142,10 +36,6 @@ int main() {
 
 		present();
 	}
-
-	send_packet(PKT_DISCONNECT, (Packet) { .disconnect = { "disconnect.quitting" } });
-
-	// sometimes the socket closes so fast that this final packet doesn't get through (if you sleep it works), kinda lame but idc rn
 
 	return 0;
 }

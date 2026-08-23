@@ -56,17 +56,15 @@ typedef struct { // only this file knows Chunks even exist
 	Mesh mesh;
 	block_t blocks[16][128][16]; // array of bytes indexing into block_types
 
-	int chunk_x, chunk_z;
+	int chunk_x, chunk_z; // we're storing this for when you're accessing this chunk through a pointer instead of indexing the chunks matrix
 
 } Chunk;
 
 static Texture blockmap_texture;
 
-// both of these store Chunk *
-static EZArray chunks; // first-come, first-serve; empty spots are NULL
-static EZArray delayed_remesh_chunks; // when you want to set a bunch of blocks, remeshing after each is slow and redundant, so you save them to remesh once at the end
+static Chunk chunks[WORLD_CHUNK_DIM][WORLD_CHUNK_DIM];
 
-#define MAX_CHUNK_COUNT (chunks.bytecount / sizeof(Chunk *))
+static EZArray delayed_remesh_chunks; // stores Chunk *; when you want to set a bunch of blocks, remeshing after each is slow and redundant, so you save them to remesh once at the end
 
 static int full_block_collider(float dx, float dy, float dz) {
 
@@ -256,6 +254,16 @@ static void remesh_chunk(Chunk *chunk) {
 void initialize_terrain() {
 
 	blockmap_texture = load_texture("res/blockmap.png");
+
+	for (int x = 0; x < WORLD_CHUNK_DIM; x++) {
+		for (int z = 0; z < WORLD_CHUNK_DIM; z++) {
+
+			chunks[x][z].mesh = create_mesh(NULL, 0, 0, blockmap_texture);
+
+			chunks[x][z].chunk_x = x;
+			chunks[x][z].chunk_z = z;
+		}
+	}
 }
 
 void draw_chunks(const Transform *camera) {
@@ -263,75 +271,15 @@ void draw_chunks(const Transform *camera) {
 	Transform chunk_transform = {0};
 	Chunk *chunk;
 
-	for (int i = 0; i < MAX_CHUNK_COUNT; i++) {
+	for (int x = 0; x < WORLD_CHUNK_DIM; x++) {
+		for (int z = 0; z < WORLD_CHUNK_DIM; z++) {
 
-		chunk = INDEX_EZARRAY(chunks, Chunk *, i);
+			chunk_transform.x = x * 16;
+			chunk_transform.z = z * 16;
 
-		if (!chunk)
-			continue;
-
-		chunk_transform.x = chunk->chunk_x * 16;
-		chunk_transform.y = 0.0;
-		chunk_transform.z = chunk->chunk_z * 16;
-
-		draw_mesh(camera, &chunk_transform, chunk->mesh);
+			draw_mesh(camera, &chunk_transform, chunks[x][z].mesh);
+		}
 	}
-}
-
-static int get_chunk_index_at(int chunk_x, int chunk_z) {
-
-	Chunk *chunk;
-
-	for (int i = 0; i < MAX_CHUNK_COUNT; i++)
-		if ((chunk = INDEX_EZARRAY(chunks, Chunk *, i)) && chunk->chunk_x == chunk_x && chunk->chunk_z == chunk_z)
-			return i;
-
-	return -1;
-}
-
-static int get_free_chunk_index() {
-
-	for (int i = 0; i < MAX_CHUNK_COUNT; i++)
-		if (!INDEX_EZARRAY(chunks, Chunk *, i))
-			return i;
-
-	return -1;
-}
-
-void create_chunk_at(int chunk_x, int chunk_z) {
-
-	int i = get_chunk_index_at(chunk_x, chunk_z);
-
-	if (i != -1)
-		return; // chunk already exists at that position
-
-	Chunk *chunk = calloc(1, sizeof(Chunk));
-	chunk->mesh = create_mesh(NULL, 0, 0, blockmap_texture);
-	chunk->chunk_x = chunk_x;
-	chunk->chunk_z = chunk_z;
-
-	i = get_free_chunk_index();
-
-	if (i == -1) { // append chunk
-
-		append_ezarray(&chunks, &chunk, sizeof(Chunk *));
-
-	} else { // insert chunk
-
-		INDEX_EZARRAY(chunks, Chunk *, i) = chunk;
-	}
-}
-
-void destroy_chunk_at(int chunk_x, int chunk_z) {
-
-	int i = get_chunk_index_at(chunk_x, chunk_z);
-
-	free_mesh(INDEX_EZARRAY(chunks, Chunk *, i)->mesh);
-	free(INDEX_EZARRAY(chunks, Chunk *, i));
-
-	INDEX_EZARRAY(chunks, Chunk *, i) = NULL;
-
-	// TODO should make sure that this chunk isn't stored in delayed_remesh_chunks
 }
 
 static Chunk *get_chunk_of_block(int x, int y, int z) {
@@ -339,9 +287,10 @@ static Chunk *get_chunk_of_block(int x, int y, int z) {
 	if (y < 0 || y >= 128) // we include y so that OOB y will return NULL
 		return NULL;
 	
-	int i = get_chunk_index_at((int) floor(x / 16.0), (int) floor(z / 16.0));
+	if (x < 0 || x >= WORLD_CHUNK_DIM * 16 || z < 0 || z >= WORLD_CHUNK_DIM * 16)
+		return NULL;
 
-	return i == -1 ? NULL : INDEX_EZARRAY(chunks, Chunk *, i);
+	return &chunks[(int) floor(x / 16.0)][(int) floor(z / 16.0)];
 }
 
 block_t get_block_at(int x, int y, int z) {
