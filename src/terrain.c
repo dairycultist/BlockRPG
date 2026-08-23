@@ -27,8 +27,6 @@ typedef struct {
 	// TODO stuff like:
 	// - mining level
 	// - dropped item
-	// - orientation (used by append_block_to_mesh)
-	// - vanilla metadata
 
 	unsigned char is_fullblock; // adjacent blocks will cull the faces that touch it
 	unsigned char is_collidable; // has full-block collision
@@ -36,7 +34,7 @@ typedef struct {
 	unsigned short ticks_to_break;
 
 	// first element is always the mesh type
-	// the use of latter elements is determined by the mesh type but is usually atlas indices
+	// the use of latter elements is determined by the mesh type but is usually atlas indices (can also be orientation!)
 	unsigned char mesh_data[4];
 
 } BlockType;
@@ -189,6 +187,50 @@ static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x
 	}
 }
 
+static void helper_append_crossmodel(EZArray *mesh_data, int *vertex_count, int x, int y, int z, unsigned char face) {
+
+	float local_x = x % 16 + (r_hash(x * 51 + z * 12) % 30) * 0.01;
+	float local_y = y      - (r_hash(x * 7 + z * 5) % 30) * 0.01;
+	float local_z = z % 16 + (r_hash(x * 19 + z * 154) % 30) * 0.01;
+
+	float u_sml, v_sml, u_big, v_big;
+
+	GET_SPRITEMAP_UV(face, u_sml, v_sml, u_big, v_big);
+
+	float full_block_data[] = {
+		local_x,	 local_y + 1, 	local_z,		0, 1, 0,	u_big, v_sml,
+		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
+		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
+		local_x + .7,local_y + 2, 	local_z + .7,	0, 1, 0,	u_sml, v_big,
+		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
+		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
+
+		local_x,	 local_y + 1, 	local_z,		0, 1, 0,	u_big, v_sml,
+		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
+		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
+		local_x + .7,local_y + 2, 	local_z + .7,	0, 1, 0,	u_sml, v_big,
+		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
+		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
+
+		local_x,		local_y + 1, 	local_z + .7,	0, 1, 0,	u_big, v_sml,
+		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
+		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
+		local_x + .7,	local_y + 2, 	local_z,		0, 1, 0,	u_sml, v_big,
+		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
+		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
+
+		local_x,		local_y + 1, 	local_z + .7,	0, 1, 0,	u_big, v_sml,
+		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
+		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
+		local_x + .7,	local_y + 2, 	local_z,		0, 1, 0,	u_sml, v_big,
+		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
+		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
+	};
+
+	append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 24);
+	*vertex_count += 24;
+}
+
 static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, int y, int z) {
 
 	block_t block = get_block_at(x, y, z);
@@ -196,7 +238,9 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 	switch (get_block_mesh_data(block, 0)) {
 
 		case MESH_EMPTY: return;
+
 		case MESH_TOP_AND_BOTTOM:
+
 			helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
 				get_block_mesh_data(block, 1),
 				get_block_mesh_data(block, 1),
@@ -206,8 +250,11 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 				get_block_mesh_data(block, 1)
 			});
 			return;
+		
 		case MESH_DIRT_GRASS:
+
 			if (block_types[get_block_at(x, y + 1, z)].is_fullblock) {
+
 				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
 					get_block_mesh_data(block, 3),
 					get_block_mesh_data(block, 3),
@@ -216,7 +263,9 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 					get_block_mesh_data(block, 3),
 					get_block_mesh_data(block, 3)
 				});
+
 			} else {
+
 				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
 					get_block_mesh_data(block, 2),
 					get_block_mesh_data(block, 2),
@@ -225,6 +274,12 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 					get_block_mesh_data(block, 3),
 					get_block_mesh_data(block, 1)
 				});
+
+				// randomly place tall grass
+				if (r_hash(x * 108 + z * 4878) % 3 != 0) {
+
+					helper_append_crossmodel(mesh_data, vertex_count, x, y, z, 4);
+				}
 			}
 			return;
 	}
