@@ -17,6 +17,10 @@ typedef struct {
     int left, right, forward, backward, up, down;
     int attack, use; // maybe change to primary and secondary
 
+    int menu_toggle; // toggling out of a menu, toggling into inventory (which is also the pause menu), etc
+    int cursor_x, cursor_y;
+    int cursor_toggle, cursor_alt_toggle;
+
 } Input;
 
 typedef struct {
@@ -32,6 +36,7 @@ typedef void *Mesh;
 void initialize_io();
 
 int game_is_running();
+void set_cursor_enabled(int boolean);
 void populate_input(Input *input);
 void present();
 

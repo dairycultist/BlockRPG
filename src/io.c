@@ -99,6 +99,7 @@ static GLuint shader2D_program;
 
 static SDL_Window *window;
 static int running = 1;
+static int is_cursor_enabled;
 
 static void log_error(const char *msg) {
 	
@@ -169,10 +170,24 @@ int game_is_running() {
     return running;
 }
 
+void set_cursor_enabled(int boolean) {
+
+	is_cursor_enabled = boolean;
+
+	SDL_SetRelativeMouseMode(!boolean);
+
+	if (boolean)
+		SDL_WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
+}
+
 void populate_input(Input *input) {
 
     input->camera_dx = 0.0;
     input->camera_dy = 0.0;
+
+	input->menu_toggle = 0;
+	input->cursor_toggle = 0;
+	input->cursor_alt_toggle = 0;
 
     input->use = 0; // TODO replace with logical cooldown (for block placement)
 
@@ -186,8 +201,11 @@ void populate_input(Input *input) {
         
         } else if (event.type == SDL_MOUSEMOTION) {
 
-            input->camera_dx = (int) event.motion.xrel; // Sint32
-            input->camera_dy = (int) event.motion.yrel;
+			if (!is_cursor_enabled) {
+
+				input->camera_dx = (int) event.motion.xrel; // Sint32
+				input->camera_dy = (int) event.motion.yrel;
+			}
 
         } else if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
 
@@ -204,7 +222,7 @@ void populate_input(Input *input) {
             } else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
                 input->down = 1;
             } else if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-                SDL_SetRelativeMouseMode(!SDL_GetRelativeMouseMode());
+				input->menu_toggle = 1;
             }
 
         } else if (event.type == SDL_KEYUP) {
@@ -227,8 +245,10 @@ void populate_input(Input *input) {
 
             if (event.button.button == 1) { // LMB
                 input->attack = 1;
+				input->cursor_toggle = 1;
             } else if (event.button.button == 3) { // RMB
                 input->use = 1;
+				input->cursor_alt_toggle = 1;
             }
         }
 

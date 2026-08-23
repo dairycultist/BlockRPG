@@ -29,6 +29,8 @@ static Mesh crosshair_mesh;
 static Texture crosshair_textures[9];
 static Mesh sky_mesh;
 
+static int in_menu;
+
 void initialize_player() {
 
 	// position player
@@ -49,6 +51,10 @@ void initialize_player() {
 	crosshair_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 64, crosshair_textures[0]);
 
 	sky_mesh = create_sky_mesh();
+
+
+	// Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture);
+	// void draw_sprite_mesh(const Mesh mesh);
 }
 
 void set_player_position(float x, float y, float z) {
@@ -76,6 +82,12 @@ void get_player_information(float *x, float *y, float *z, float *camera_y, float
 }
 
 void player_process_tick(Input *input) {
+
+	if (input->menu_toggle) {
+
+		in_menu = !in_menu;
+		set_cursor_enabled(in_menu);
+	}
 
 	// player camera control
 	camera.pitch += input->camera_dy * 0.01;
