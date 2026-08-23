@@ -6,6 +6,8 @@
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
+#define GUI_SCALE 4
+
 #define WORLD_CHUNK_DIM 8
 
 #define FOV 90

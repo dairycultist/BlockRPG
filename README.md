@@ -6,6 +6,9 @@ Open source singleplayer voxel game written in C + OpenGL.
 
 I like the medieval fantasy vibe of Minecraft, so I wanna lean into that. I also like the old console-edition crafting menu (couch gaming omg)
 
+the player will have an inventory with infinite space and that's automatically sorted (except the hotbar) because inventory management sucks
+and storage systems suck. your base is for utility stuff like crafting, cooking, farming, and snoozin
+
 BTA
 
 matcha flavoured (steal copper and bronze and rpg progression and cool food)

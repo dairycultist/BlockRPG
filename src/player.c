@@ -28,6 +28,7 @@ static unsigned short lookblock_breakticks_total;
 static Mesh crosshair_mesh;
 static Texture crosshair_textures[9];
 static Mesh sky_mesh;
+static Mesh inventory_mesh;
 
 static int in_menu;
 
@@ -52,9 +53,7 @@ void initialize_player() {
 
 	sky_mesh = create_sky_mesh();
 
-
-	// Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture);
-	// void draw_sprite_mesh(const Mesh mesh);
+	inventory_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 256 * GUI_SCALE, load_texture("res/inventory.png"));
 }
 
 void player_process_tick(Input *input) {
@@ -219,5 +218,9 @@ void player_process_tick(Input *input) {
 	draw_entities(&camera);
 
 	// draw UI
-	draw_sprite_mesh(crosshair_mesh);
+	if (in_menu) {
+		draw_sprite_mesh(inventory_mesh);
+	} else {
+		draw_sprite_mesh(crosshair_mesh);
+	}
 }
