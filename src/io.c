@@ -727,21 +727,28 @@ void draw_sky_mesh(const Transform *camera, const Mesh mesh) {
 	glEnable(GL_DEPTH_TEST);
 }
 
-Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
-	
-	const float w = h_pixels / (float) WINDOW_WIDTH * ((TextureGL *) texture)->h / ((TextureGL *) texture)->w;
+Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+
+	// I know I know, the variable names here suck fat nuts
+
+	const float w = h_pixels / (float) WINDOW_WIDTH * width / height;
 	const float h = h_pixels / (float) WINDOW_HEIGHT;
 
 	u -= anchor_u * w;
 	v -= anchor_v * h;
 
+	float sample_u1 = x            / (float) ((TextureGL *) texture)->w;
+	float sample_v1 = y            / (float) ((TextureGL *) texture)->h;
+	float sample_u2 = (x + width)  / (float) ((TextureGL *) texture)->w;
+	float sample_v2 = (y + height) / (float) ((TextureGL *) texture)->h;
+
 	const float mesh_data[] = {
-		u,     v,     0.0f, 0.0f,
-		u + w, v,     1.0f, 0.0f,
-		u,     v + h, 0.0f, 1.0f,
-		u + w, v,     1.0f, 0.0f,
-		u + w, v + h, 1.0f, 1.0f,
-		u,     v + h, 0.0f, 1.0f
+		u,     v,     sample_u1, sample_v1,
+		u + w, v,     sample_u2, sample_v1,
+		u,     v + h, sample_u1, sample_v2,
+		u + w, v,     sample_u2, sample_v1,
+		u + w, v + h, sample_u2, sample_v2,
+		u,     v + h, sample_u1, sample_v2
 	};
 
 	static const int mesh_vertcount = 6;
@@ -779,6 +786,11 @@ Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_
 	return mesh_gl;
 }
 
+Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+	
+	create_sprite_mesh_from_matrix(0, 0, ((TextureGL *) texture)->w, ((TextureGL *) texture)->h, u, v, anchor_u, anchor_v, h_pixels, texture);
+}
+
 void draw_sprite_mesh(const Mesh mesh) {
 
 	// bind the mesh's vertex mesh and texture
@@ -790,6 +802,8 @@ void draw_sprite_mesh(const Mesh mesh) {
 
 	// draw
 	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
 	glDrawArrays(GL_TRIANGLES, 0, ((MeshGL *) mesh)->vertex_count);
 	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
 }

@@ -28,7 +28,7 @@ static unsigned short lookblock_breakticks_total;
 static Mesh crosshair_mesh;
 static Texture crosshair_textures[9];
 static Mesh sky_mesh;
-static Mesh inventory_mesh;
+static Mesh inventory_mesh, hotbar_mesh;
 
 static int in_menu;
 
@@ -54,6 +54,9 @@ void initialize_player() {
 	sky_mesh = create_sky_mesh();
 
 	inventory_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 256 * GUI_SCALE, load_texture("res/inventory.png"));
+
+	// TODO                                         VVV this is not ideal (should be 0) but idk how to fix it rn
+	hotbar_mesh = create_sprite_mesh_from_matrix(0, 256 - 29, 210, 29, 0.0f, -1.0f, 0.5f, 0.0f, 29 * GUI_SCALE, load_texture("res/hud.png"));
 }
 
 void player_process_tick(Input *input) {
@@ -223,4 +226,6 @@ void player_process_tick(Input *input) {
 	} else {
 		draw_sprite_mesh(crosshair_mesh);
 	}
+
+	draw_sprite_mesh(hotbar_mesh);
 }

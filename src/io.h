@@ -59,8 +59,12 @@ void draw_sky_mesh(const Transform *camera, const Mesh mesh);
 // u/v [-1, 1] are the screen UV where the anchor should be aligned
 // anchor_u/anchor_v [0, 1] are the sprite UV of the anchor
 // h_pixels is height in pixels (width is calculated automatically)
+Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture);
 Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture);
 void draw_sprite_mesh(const Mesh mesh);
+
+// for registering where in a sprite mesh the user clicked/hovered, for buttons and stuff
+// TODO sprite_mesh_window_to_texture_pos(const Mesh mesh, int x, int y)
 
 // misc
 void mesh_set_texture(Mesh mesh, Texture texture);
