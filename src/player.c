@@ -89,6 +89,8 @@ void player_process_tick(Input *input) {
 		set_cursor_enabled(in_menu);
 	}
 
+	printf("%d, %d\n", input->cursor_x, input->cursor_y);
+
 	// player camera control
 	camera.pitch += input->camera_dy * 0.01;
 	camera.yaw += input->camera_dx * 0.01;

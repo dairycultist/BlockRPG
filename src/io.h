@@ -12,13 +12,13 @@
 
 typedef struct {
 
-    int camera_dx, camera_dy;
+    int camera_dx, camera_dy; // always 0,0 if cursor is enabled
 
     int left, right, forward, backward, up, down;
     int attack, use; // maybe change to primary and secondary
 
     int menu_toggle; // toggling out of a menu, toggling into inventory (which is also the pause menu), etc
-    int cursor_x, cursor_y;
+    int cursor_x, cursor_y; // always 0,0 if cursor is not enabled
     int cursor_toggle, cursor_alt_toggle;
 
 } Input;

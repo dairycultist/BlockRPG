@@ -182,6 +182,12 @@ void set_cursor_enabled(int boolean) {
 
 void populate_input(Input *input) {
 
+	if (!is_cursor_enabled) {
+
+		input->cursor_x = 0;
+		input->cursor_y = 0;
+	}
+
     input->camera_dx = 0.0;
     input->camera_dy = 0.0;
 
@@ -201,7 +207,12 @@ void populate_input(Input *input) {
         
         } else if (event.type == SDL_MOUSEMOTION) {
 
-			if (!is_cursor_enabled) {
+			if (is_cursor_enabled) {
+
+				input->cursor_x = (int) event.motion.x; // Sint32
+				input->cursor_y = (int) event.motion.y;
+
+			} else {
 
 				input->camera_dx = (int) event.motion.xrel; // Sint32
 				input->camera_dy = (int) event.motion.yrel;
