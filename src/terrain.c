@@ -43,12 +43,12 @@ static void remesh_chunk(Chunk *chunk) {
 					y,
 					z,
 					(unsigned char[6]) {
-						block_types[(get_block_at(global_x - 1, y, 		global_z	))].is_fullblock,
-						block_types[(get_block_at(global_x + 1, y, 		global_z	))].is_fullblock,
-						block_types[(get_block_at(global_x, 	y, 		global_z - 1))].is_fullblock,
-						block_types[(get_block_at(global_x, 	y, 		global_z + 1))].is_fullblock,
-						block_types[(get_block_at(global_x, 	y - 1, 	global_z	))].is_fullblock,
-						block_types[(get_block_at(global_x, 	y + 1, 	global_z	))].is_fullblock
+						get_block_is_fullblock(get_block_at(global_x - 1, y, 	global_z	)),
+						get_block_is_fullblock(get_block_at(global_x + 1, y, 	global_z	)),
+						get_block_is_fullblock(get_block_at(global_x, 	y, 		global_z - 1)),
+						get_block_is_fullblock(get_block_at(global_x, 	y, 		global_z + 1)),
+						get_block_is_fullblock(get_block_at(global_x, 	y - 1, 	global_z	)),
+						get_block_is_fullblock(get_block_at(global_x, 	y + 1, 	global_z	))
 					}
 				);
 			}
@@ -166,7 +166,7 @@ void remesh_delayed_chunks() {
 
 int does_point_intersect_blocks(int x, int y, int z) {
 
-	return block_types[get_block_at(x, y, z)].is_collidable;
+	return get_block_is_collidable(get_block_at(x, y, z));
 }
 
 int does_aabb_intersect_blocks(AABB *aabb) {
@@ -184,9 +184,7 @@ int does_aabb_intersect_blocks(AABB *aabb) {
 
 int would_aabb_intersect_block_at(int x, int y, int z, block_t block, AABB *aabb) {
 
-	BlockType *block_type = &block_types[block];
-
-	if (!(block_type->is_collidable))
+	if (!get_block_is_collidable(block))
 		return 0;
 
 	float aabb_x = aabb->x - x;

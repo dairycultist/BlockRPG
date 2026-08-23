@@ -1,9 +1,26 @@
 #include "blocks.h"
 
+typedef struct {
+
+	// TODO stuff like:
+	// - mining level
+	// - dropped item
+
+	unsigned char is_fullblock; // adjacent blocks will cull the faces that touch it
+	unsigned char is_collidable; // has full-block collision
+
+	unsigned short ticks_to_break;
+
+	// first element is always the mesh type
+	// the use of latter elements is determined by the mesh type but is usually atlas indices (can also be orientation!)
+	unsigned char mesh_data[4];
+
+} BlockType;
+
 Texture blockmap_texture;
 
 // block type registry
-BlockType block_types[256] = {
+static BlockType block_types[256] = {
 
 	[ BLOCK_AIR ]	= (BlockType) { 0 },
 	[ BLOCK_GRASS ]	= (BlockType) { 1, 1, 20, { MESH_DIRT_GRASS, 0, 1, 2 } },
@@ -29,12 +46,25 @@ unsigned short get_block_ticks_to_break(block_t block) {
 	return block_types[block].ticks_to_break;
 }
 
+unsigned char get_block_is_fullblock(block_t block) {
+
+    return block_types[block].is_fullblock;
+}
+
+unsigned char get_block_is_collidable(block_t block) {
+
+    return block_types[block].is_collidable;
+}
+
 unsigned char get_block_mesh_data(block_t block, int i) {
 
 	return block_types[block].mesh_data[i];
 }
 
-//                                                                                              [ -x, +x, -z, +z, -y (bottom), +y (top) ]
+// helper for mesh creation
+#define GET_SPRITEMAP_UV(index, u_sml, v_sml, u_big, v_big) u_sml = ((index) % 16) / 16.; v_sml = ((index) / 16) / 16.; u_big = (((index) + 1) % 16) / 16.; v_big = ((index) / 16 + 1) / 16.
+
+// faces[6] has same directionality order as is_occluded[6]
 static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x, int y, int z, unsigned char faces[6], unsigned char is_occluded[6]) {
 
 	float u_sml, v_sml, u_big, v_big;
