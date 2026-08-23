@@ -57,30 +57,6 @@ void initialize_player() {
 	// void draw_sprite_mesh(const Mesh mesh);
 }
 
-void set_player_position(float x, float y, float z) {
-
-	aabb.x = x;
-	aabb.y = y;
-	aabb.z = z;
-}
-
-void set_player_rotation(float yaw, float pitch) {
-
-	camera.yaw = yaw;
-	camera.pitch = pitch;
-}
-
-void get_player_information(float *x, float *y, float *z, float *camera_y, float *yaw, float *pitch, int *grounded_out) {
-
-	if (x) { *x = aabb.x; }
-	if (y) { *y = aabb.y; }
-	if (z) { *z = aabb.z; }
-	if (camera_y) { *camera_y = camera.y; }
-	if (yaw) { *yaw = camera.yaw; }
-	if (pitch) { *pitch = camera.pitch; }
-	if (grounded_out) { *grounded_out = grounded; }
-}
-
 void player_process_tick(Input *input) {
 
 	if (input->menu_toggle) {
