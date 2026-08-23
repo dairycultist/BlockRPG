@@ -232,5 +232,5 @@ void player_process_tick(Input *input) {
 
 	draw_sprite_mesh(hotbar_mesh);
 
-	draw_mesh_as_icon(test_icon_mesh, 0.0f, 0.0f);
+	draw_mesh_as_icon(test_icon_mesh, 0.0f, -1.0f);
 }

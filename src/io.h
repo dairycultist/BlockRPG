@@ -67,7 +67,10 @@ Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_
 void draw_sprite_mesh(const Mesh mesh);
 
 // TODO for registering where in a sprite mesh the user clicked/hovered, for buttons and stuff
-void sprite_mesh_window_to_texture_pos(const Mesh mesh, int window_x, int window_y, int *texture_x, int *texture_y);
+void sprite_mesh_window_pos_to_texture_pos(const Mesh mesh, int window_x, int window_y, int *texture_x, int *texture_y);
+
+// TODO for determining where to render item icons
+void sprite_mesh_texture_pos_to_window_uv(const Mesh mesh, int texture_x, int texture_y, int *window_u, int *window_v);
 
 // misc
 void mesh_set_texture(Mesh mesh, Texture texture);

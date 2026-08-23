@@ -5,39 +5,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-// stole this from nash so I don't have to use rand(). it's deterministic!
-unsigned int r_hash(unsigned int seed) {
-	
-    seed ^= seed << 13;
-    seed ^= seed >> 17;
-    seed ^= seed << 5;
-    return seed;
-}
-
 // technically we don't need this since blocks are never at negative positions, but whatever
 #define SAFEMOD(a, b) ((((a) % (b)) + b) % b)
-
-// block mesh types
-#define MESH_EMPTY 0
-#define MESH_TOP_AND_BOTTOM 1
-#define MESH_DIRT_GRASS 2
-
-typedef struct {
-
-	// TODO stuff like:
-	// - mining level
-	// - dropped item
-
-	unsigned char is_fullblock; // adjacent blocks will cull the faces that touch it
-	unsigned char is_collidable; // has full-block collision
-
-	unsigned short ticks_to_break;
-
-	// first element is always the mesh type
-	// the use of latter elements is determined by the mesh type but is usually atlas indices (can also be orientation!)
-	unsigned char mesh_data[4];
-
-} BlockType;
 
 typedef struct { // only this file knows Chunks even exist
 
@@ -48,240 +17,9 @@ typedef struct { // only this file knows Chunks even exist
 
 } Chunk;
 
-static Texture blockmap_texture;
-
 static Chunk chunks[WORLD_CHUNK_DIM][WORLD_CHUNK_DIM];
 
 static EZArray delayed_remesh_chunks; // stores Chunk *; when you want to set a bunch of blocks, remeshing after each is slow and redundant, so you save them to remesh once at the end
-
-// block type registry
-static BlockType block_types[256] = {
-
-	[ BLOCK_AIR ]	= (BlockType) { 0 },
-	[ BLOCK_GRASS ]	= (BlockType) { 1, 1, 20, { MESH_DIRT_GRASS, 0, 1, 2 } },
-	[ BLOCK_STONE ]	= (BlockType) { 1, 1, 60, { MESH_TOP_AND_BOTTOM, 3 } }
-};
-
-static inline unsigned char get_block_mesh_data(block_t block, int i) {
-
-	return block_types[block].mesh_data[i];
-}
-
-#define GET_SPRITEMAP_UV(index, u_sml, v_sml, u_big, v_big) u_sml = ((index) % 16) / 16.; v_sml = ((index) / 16) / 16.; u_big = (((index) + 1) % 16) / 16.; v_big = ((index) / 16 + 1) / 16.
-
-//                                                                                              [ -x, +x, -z, +z, -y (bottom), +y (top) ]
-static void helper_append_fullblock(EZArray *mesh_data, int *vertex_count, int x, int y, int z, unsigned char faces[6]) {
-
-	int local_x = SAFEMOD(x, 16);
-	int local_y = y;
-	int local_z = SAFEMOD(z, 16);
-
-	float u_sml, v_sml, u_big, v_big;
-
-	// -x face
-	if (!block_types[(get_block_at(x - 1, y, z))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[0], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x, local_y, local_z,			-1, 0, 0,	u_big, v_sml,
-			local_x, local_y, local_z + 1,		-1, 0, 0,	u_sml, v_sml,
-			local_x, local_y + 1, local_z,		-1, 0, 0,	u_big, v_big,
-			local_x, local_y + 1, local_z + 1,	-1, 0, 0,	u_sml, v_big,
-			local_x, local_y + 1, local_z,		-1, 0, 0,	u_big, v_big,
-			local_x, local_y, local_z + 1,		-1, 0, 0,	u_sml, v_sml,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-
-	// +x face
-	if (!block_types[(get_block_at(x + 1, y, z))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[1], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x + 1, local_y, local_z,			1, 0, 0,	u_sml, v_sml,
-			local_x + 1, local_y + 1, local_z,		1, 0, 0,	u_sml, v_big,
-			local_x + 1, local_y, local_z + 1,		1, 0, 0,	u_big, v_sml,
-			local_x + 1, local_y + 1, local_z + 1,	1, 0, 0,	u_big, v_big,
-			local_x + 1, local_y, local_z + 1,		1, 0, 0,	u_big, v_sml,
-			local_x + 1, local_y + 1, local_z,		1, 0, 0,	u_sml, v_big,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-
-	// -z face
-	if (!block_types[(get_block_at(x, y, z - 1))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[2], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x, local_y, local_z,			0, 0, -1,	u_sml, v_sml,
-			local_x, local_y + 1, local_z,		0, 0, -1,	u_sml, v_big,
-			local_x + 1, local_y, local_z,		0, 0, -1,	u_big, v_sml,
-			local_x + 1, local_y + 1, local_z,	0, 0, -1,	u_big, v_big,
-			local_x + 1, local_y, local_z,		0, 0, -1,	u_big, v_sml,
-			local_x, local_y + 1, local_z,		0, 0, -1,	u_sml, v_big,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-
-	// +z face
-	if (!block_types[(get_block_at(x, y, z + 1))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[3], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x, local_y, local_z + 1,			0, 0, 1,	u_big, v_sml,
-			local_x + 1, local_y, local_z + 1,		0, 0, 1,	u_sml, v_sml,
-			local_x, local_y + 1, local_z + 1,		0, 0, 1,	u_big, v_big,
-			local_x + 1, local_y + 1, local_z + 1,	0, 0, 1,	u_sml, v_big,
-			local_x, local_y + 1, local_z + 1,		0, 0, 1,	u_big, v_big,
-			local_x + 1, local_y, local_z + 1,		0, 0, 1,	u_sml, v_sml,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-
-	// -y face
-	if (!block_types[(get_block_at(x, y - 1, z))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[4], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x, local_y, local_z,			0, -1, 0,	u_sml, v_sml,
-			local_x + 1, local_y, local_z,		0, -1, 0,	u_sml, v_big,
-			local_x, local_y, local_z + 1,		0, -1, 0,	u_big, v_sml,
-			local_x + 1, local_y, local_z + 1,	0, -1, 0,	u_big, v_big,
-			local_x, local_y, local_z + 1,		0, -1, 0,	u_big, v_sml,
-			local_x + 1, local_y, local_z,		0, -1, 0,	u_sml, v_big,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-
-	// +y face
-	if (!block_types[(get_block_at(x, y + 1, z))].is_fullblock) {
-
-		GET_SPRITEMAP_UV(faces[5], u_sml, v_sml, u_big, v_big);
-
-		float full_block_data[] = {
-			local_x, 		local_y + 1, local_z,			0, 1, 0,	u_big, v_sml,
-			local_x, 		local_y + 1, local_z + 1,		0, 1, 0,	u_sml, v_sml,
-			local_x + 1, 	local_y + 1, local_z,			0, 1, 0,	u_big, v_big,
-			local_x + 1, 	local_y + 1, local_z + 1,		0, 1, 0,	u_sml, v_big,
-			local_x + 1, 	local_y + 1, local_z,			0, 1, 0,	u_big, v_big,
-			local_x, 		local_y + 1, local_z + 1,		0, 1, 0,	u_sml, v_sml,
-		};
-
-		append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 6);
-		*vertex_count += 6;
-	}
-}
-
-static void helper_append_crossmodel(EZArray *mesh_data, int *vertex_count, int x, int y, int z, unsigned char face) {
-
-	float local_x = x % 16 + (r_hash(x * 51 + z * 12) % 30) * 0.01;
-	float local_y = y      - (r_hash(x * 7 + z * 5) % 30) * 0.01;
-	float local_z = z % 16 + (r_hash(x * 19 + z * 154) % 30) * 0.01;
-
-	float u_sml, v_sml, u_big, v_big;
-
-	GET_SPRITEMAP_UV(face, u_sml, v_sml, u_big, v_big);
-
-	float full_block_data[] = {
-		local_x,	 local_y + 1, 	local_z,		0, 1, 0,	u_big, v_sml,
-		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
-		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
-		local_x + .7,local_y + 2, 	local_z + .7,	0, 1, 0,	u_sml, v_big,
-		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
-		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
-
-		local_x,	 local_y + 1, 	local_z,		0, 1, 0,	u_big, v_sml,
-		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
-		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
-		local_x + .7,local_y + 2, 	local_z + .7,	0, 1, 0,	u_sml, v_big,
-		local_x + .7,local_y + 1, 	local_z + .7,	0, 1, 0,	u_sml, v_sml,
-		local_x,	 local_y + 2, 	local_z,		0, 1, 0,	u_big, v_big,
-
-		local_x,		local_y + 1, 	local_z + .7,	0, 1, 0,	u_big, v_sml,
-		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
-		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
-		local_x + .7,	local_y + 2, 	local_z,		0, 1, 0,	u_sml, v_big,
-		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
-		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
-
-		local_x,		local_y + 1, 	local_z + .7,	0, 1, 0,	u_big, v_sml,
-		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
-		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
-		local_x + .7,	local_y + 2, 	local_z,		0, 1, 0,	u_sml, v_big,
-		local_x + .7,	local_y + 1, 	local_z,		0, 1, 0,	u_sml, v_sml,
-		local_x,		local_y + 2, 	local_z + .7,	0, 1, 0,	u_big, v_big,
-	};
-
-	append_ezarray(mesh_data, full_block_data, sizeof(float) * 8 * 24);
-	*vertex_count += 24;
-}
-
-static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, int y, int z) {
-
-	block_t block = get_block_at(x, y, z);
-
-	switch (get_block_mesh_data(block, 0)) {
-
-		case MESH_EMPTY: return;
-
-		case MESH_TOP_AND_BOTTOM:
-
-			helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
-				get_block_mesh_data(block, 1),
-				get_block_mesh_data(block, 1),
-				get_block_mesh_data(block, 1),
-				get_block_mesh_data(block, 1),
-				get_block_mesh_data(block, 1),
-				get_block_mesh_data(block, 1)
-			});
-			return;
-		
-		case MESH_DIRT_GRASS:
-
-			if (block_types[get_block_at(x, y + 1, z)].is_fullblock) {
-
-				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 3)
-				});
-
-			} else {
-
-				helper_append_fullblock(mesh_data, vertex_count, x, y, z, (unsigned char[6]) {
-					get_block_mesh_data(block, 2),
-					get_block_mesh_data(block, 2),
-					get_block_mesh_data(block, 2),
-					get_block_mesh_data(block, 2),
-					get_block_mesh_data(block, 3),
-					get_block_mesh_data(block, 1)
-				});
-
-				// randomly place tall grass
-				if (r_hash(x * 108 + z * 4878) % 2 != 0)
-					helper_append_crossmodel(mesh_data, vertex_count, x, y, z, 4 + (r_hash(x * y * z) % 17) / 16);
-			}
-			return;
-	}
-}
 
 // remeshes based on the chunk's internal blocks
 static void remesh_chunk(Chunk *chunk) {
@@ -290,24 +28,38 @@ static void remesh_chunk(Chunk *chunk) {
 
 	int vertex_count = 0;
 
-	for (int x = 0; x < 16; x++)
-		for (int y = 0; y < 128; y++)
-			for (int z = 0; z < 16; z++)
+	for (int x = 0; x < 16; x++) {
+		for (int y = 0; y < 128; y++) {
+			for (int z = 0; z < 16; z++) {
+
+				int global_x = x + chunk->chunk_x * 16;
+				int global_z = z + chunk->chunk_z * 16;
+
 				append_block_to_mesh(
 					&mesh_data,
 					&vertex_count,
-					x + chunk->chunk_x * 16,
+					get_block_at(x + chunk->chunk_x * 16, y, z + chunk->chunk_z * 16),
+					x,
 					y,
-					z + chunk->chunk_z * 16
+					z,
+					(unsigned char[6]) {
+						block_types[(get_block_at(global_x - 1, y, 		global_z	))].is_fullblock,
+						block_types[(get_block_at(global_x + 1, y, 		global_z	))].is_fullblock,
+						block_types[(get_block_at(global_x, 	y, 		global_z - 1))].is_fullblock,
+						block_types[(get_block_at(global_x, 	y, 		global_z + 1))].is_fullblock,
+						block_types[(get_block_at(global_x, 	y - 1, 	global_z	))].is_fullblock,
+						block_types[(get_block_at(global_x, 	y + 1, 	global_z	))].is_fullblock
+					}
 				);
+			}
+		}
+	}
 
 	// create mesh
 	remesh_mesh(chunk->mesh, mesh_data.data, mesh_data.bytecount, vertex_count);
 }
 
 void initialize_terrain() {
-
-	blockmap_texture = load_texture("res/blockmap.png");
 
 	for (int x = 0; x < WORLD_CHUNK_DIM; x++) {
 		for (int z = 0; z < WORLD_CHUNK_DIM; z++) {
@@ -388,11 +140,6 @@ void set_block_at(int x, int y, int z, block_t block) {
 		if (chunk)
 			remesh_chunk(chunk);
 	}
-}
-
-unsigned short get_block_ticks_to_break(block_t block) {
-
-	return block_types[block].ticks_to_break;
 }
 
 void set_delay_remesh_block_at(int x, int y, int z, block_t block) {

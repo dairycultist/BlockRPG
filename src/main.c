@@ -10,6 +10,7 @@
 int main() {
 
 	initialize_io();
+	initialize_blocks();
 	initialize_terrain();
 	initialize_entities();
 	initialize_player();
