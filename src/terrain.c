@@ -276,9 +276,9 @@ static void append_block_to_mesh(EZArray *mesh_data, int *vertex_count, int x, i
 				});
 
 				// randomly place tall grass
-				if (r_hash(x * 108 + z * 4878) % 3 != 0) {
+				if (r_hash(x * 108 + z * 4878) % 2 != 0) {
 
-					helper_append_crossmodel(mesh_data, vertex_count, x, y, z, 4);
+					helper_append_crossmodel(mesh_data, vertex_count, x, y, z, 4 + (r_hash(x * y * z) % 17) / 16);
 				}
 			}
 			return;
