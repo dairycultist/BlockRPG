@@ -182,7 +182,18 @@ void set_cursor_enabled(int boolean) {
 
 void populate_input(Input *input) {
 
-	if (!is_cursor_enabled) {
+	if (is_cursor_enabled) {
+
+		input->left = 0;
+		input->right = 0;
+		input->forward = 0;
+		input->backward = 0;
+		input->up = 0;
+		input->down = 0;
+		input->attack = 0;
+		input->use = 0;
+
+	} else {
 
 		input->cursor_x = 0;
 		input->cursor_y = 0;
@@ -220,56 +231,74 @@ void populate_input(Input *input) {
 
         } else if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
 
-            if (event.key.keysym.scancode == SDL_SCANCODE_A) {
-                input->left = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
-                input->right = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
-                input->forward = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
-                input->backward = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-                input->up = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-                input->down = 1;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+			if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+
 				input->menu_toggle = 1;
-            }
+			
+			} else if (!is_cursor_enabled) {
+
+				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
+					input->left = 1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
+					input->right = 1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
+					input->forward = 1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
+					input->backward = 1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+					input->up = 1;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
+					input->down = 1;
+				}
+			}
 
         } else if (event.type == SDL_KEYUP) {
 
-            if (event.key.keysym.scancode == SDL_SCANCODE_A) {
-                input->left = 0;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
-                input->right = 0;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
-                input->forward = 0;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
-                input->backward = 0;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-                input->up = 0;
-            } else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-                input->down = 0;
-            }
+			if (!is_cursor_enabled) {
+
+				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
+					input->left = 0;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
+					input->right = 0;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
+					input->forward = 0;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
+					input->backward = 0;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+					input->up = 0;
+				} else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
+					input->down = 0;
+				}
+			}
 
         } else if (event.type == SDL_MOUSEBUTTONDOWN) {
 
             if (event.button.button == 1) { // LMB
-                input->attack = 1;
-				input->cursor_toggle = 1;
+
+				if (is_cursor_enabled)
+					input->cursor_toggle = 1;
+				else
+                	input->attack = 1;
+				
             } else if (event.button.button == 3) { // RMB
-                input->use = 1;
-				input->cursor_alt_toggle = 1;
+
+				if (is_cursor_enabled)
+					input->cursor_alt_toggle = 1;
+				else
+                	input->use = 1;
             }
         }
 
         else if (event.type == SDL_MOUSEBUTTONUP) {
 
-            if (event.button.button == 1) { // LMB
-                input->attack = 0;
-            } else if (event.button.button == 3) { // RMB
-                input->use = 0;
-            }
+			if (!is_cursor_enabled) {
+
+				if (event.button.button == 1) { // LMB
+					input->attack = 0;
+				} else if (event.button.button == 3) { // RMB
+					input->use = 0;
+				}
+			}
         }
     }
 }

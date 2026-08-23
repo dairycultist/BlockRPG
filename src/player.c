@@ -89,7 +89,8 @@ void player_process_tick(Input *input) {
 		set_cursor_enabled(in_menu);
 	}
 
-	printf("%d, %d\n", input->cursor_x, input->cursor_y);
+	if (input->cursor_toggle)
+		printf("clicked at %d, %d\n", input->cursor_x, input->cursor_y);
 
 	// player camera control
 	camera.pitch += input->camera_dy * 0.01;
