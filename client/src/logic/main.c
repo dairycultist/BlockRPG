@@ -10,7 +10,8 @@
 
 int main() {
 
-	initialize_io();
+	initialize_window();
+	initialize_render();
 	initialize_blocks();
 	initialize_terrain();
 	initialize_entities();

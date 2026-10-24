@@ -1,7 +1,8 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-// abstracts away having to deal with memory-managing a list of entities, iterating over entities for rendering/collision...
+// everything to do with the world that isn't the terrain or rendering
+// also abstracts away having to deal with memory-managing a list of entities, iterating over entities for rendering/collision...
 
 #include <stdint.h>
 

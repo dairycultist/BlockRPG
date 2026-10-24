@@ -1,14 +1,15 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-// exposes helpers for receiving player input, model manipulation and rendering, etc
-
-// abstracts away all that hardware-specific stuff (graphical context/renderer, the
-// file system, what physical inputs map to which game inputs, etc)
-
-// if you want to port this game to something that doesn't support SDL/OpenGL, or
-// otherwise handles rendering, input, file loading, etc differently, you should
-// only have to reimplement io.c
+/*
+ * abstracts away all that hardware-specific stuff (graphical context/renderer,
+ * manipulating 2D/3D models, the file system, what physical inputs map to which
+ * game inputs, etc)
+ * 
+ * if you want to port this game to something that doesn't support SDL/OpenGL, or
+ * otherwise handles IO operations differently, you should (ideally) only have to
+ * reimplement io.c
+ */
 
 typedef struct {
 
@@ -34,12 +35,20 @@ typedef struct {
 typedef void *Texture;
 typedef void *Mesh;
 
-void initialize_io();
+/*
+ * implemented by window.c
+ */
+void initialize_window();
 
 int game_is_running();
 void set_cursor_enabled(int boolean);
 void populate_input(Input *input);
 void present();
+
+/*
+ * implemented by render.c
+ */
+void initialize_render();
 
 // textures
 Texture load_texture(const char *path);
