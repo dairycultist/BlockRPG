@@ -1,5 +1,4 @@
-#include "logic.h"
-#include "player.h"
+#include "entity.h"
 
 #include "../terrain/terrain.h"
 

@@ -2,7 +2,6 @@
 #define ENTITY_H
 
 // everything to do with the world that isn't the terrain or rendering
-// also abstracts away having to deal with memory-managing a list of entities, iterating over entities for rendering/collision...
 
 #include <stdint.h>
 
@@ -31,6 +30,17 @@ typedef struct {
 
 } Entity;
 
+/*
+ * implemented by player.c
+ * basically just conveniently groups together player code (drawing their perspective, handling their input, etc)
+ */
+void initialize_player();
+void player_process_tick(Input *input);
+
+/*
+ * implemented by entity.c
+ * abstracts away having to deal with memory-managing a list of entities, iterating over entities for rendering/collision...
+ */
 void initialize_entities();
 void entities_process_tick();
 void draw_entities(const Transform *camera);

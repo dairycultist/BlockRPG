@@ -1,6 +1,5 @@
 #include "terrain.h"
 
-#include "../logic/logic.h"
 #include "../util/util.h"
 
 #include <stdlib.h>

@@ -1,8 +1,5 @@
-#include "logic.h"
-#include "player.h"
-
-#include "../context/context.h"
-#include "../terrain/terrain.h"
+#include "context/context.h"
+#include "terrain/terrain.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,6 +1,6 @@
 #include "context.h"
 
-#include "../logic/logic.h"
+#include "../util/util.h"
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
