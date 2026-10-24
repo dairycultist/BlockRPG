@@ -73,7 +73,7 @@ void initialize_terrain() {
 	}
 }
 
-void draw_chunks(const Transform *camera) {
+void draw_terrain(const Transform *camera) {
 
 	Transform chunk_transform = {0};
 	Chunk *chunk;

@@ -1,4 +1,4 @@
-#include "block.h"
+#include "terrain.h"
 
 typedef struct {
 

@@ -221,7 +221,7 @@ void player_process_tick(Input *input) {
 	draw_sky_mesh(&camera, sky_mesh);
 
 	// draw worldly stuff
-	draw_chunks(&camera);
+	draw_terrain(&camera);
 	draw_entities(&camera);
 
 	// draw UI
