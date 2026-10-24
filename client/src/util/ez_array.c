@@ -1,4 +1,4 @@
-#include "ez_array.h"
+#include "util.h"
 #include <stdlib.h>
 #include <string.h>
 

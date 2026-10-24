@@ -3,9 +3,10 @@
 
 // exposes terrain manipulation as globally positioned and chunk-agnostic (abstracting away chunks basically)
 
-#include "io.h"
-#include "entities.h"
-#include "blocks.h"
+#include "block.h"
+
+#include "../context/context.h"
+#include "../entity/entity.h"
 
 void initialize_terrain();
 void draw_chunks(const Transform *camera);

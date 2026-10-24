@@ -1,8 +1,9 @@
-#ifndef EZ_ARRAY_H
-#define EZ_ARRAY_H
+#ifndef UTIL_H
+#define UTIL_H
 
-// helper data structure
-
+/*
+ * implemented by ez_array.c
+ */
 typedef struct {
 
 	unsigned char *data;

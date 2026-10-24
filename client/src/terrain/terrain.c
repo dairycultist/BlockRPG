@@ -1,6 +1,7 @@
-#include "main.h"
 #include "terrain.h"
-#include "ez_array.h"
+
+#include "../logic/logic.h"
+#include "../util/util.h"
 
 #include <stdlib.h>
 #include <math.h>

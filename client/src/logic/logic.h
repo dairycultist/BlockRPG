@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef LOGIC_H
+#define LOGIC_H
 
 // literally just all the configurable constants. all of them. that I want to be easily configured :)
 

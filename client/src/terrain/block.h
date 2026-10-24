@@ -1,10 +1,10 @@
-#ifndef BLOCKS_H
-#define BLOCKS_H
+#ifndef BLOCK_H
+#define BLOCK_H
 
 // abstracts away internal format of block types
 
-#include "io.h"
-#include "ez_array.h"
+#include "../context/context.h"
+#include "../util/util.h"
 
 // block mesh types
 #define MESH_EMPTY 0

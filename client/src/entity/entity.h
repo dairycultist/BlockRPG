@@ -1,11 +1,11 @@
-#ifndef ENTITIES_H
-#define ENTITIES_H
+#ifndef ENTITY_H
+#define ENTITY_H
 
 // abstracts away having to deal with memory-managing a list of entities, iterating over entities for rendering/collision...
 
 #include <stdint.h>
 
-#include "io.h"
+#include "../context/context.h"
 
 // an AABB is a rectangular prism with a square base centered on x,y,z (extruding up)
 typedef struct {

@@ -1,7 +1,6 @@
 #include <stddef.h>
 
-#include "io.h"
-#include "entities.h"
+#include "entity.h"
 
 #define MAX_ENTITIES 64
 

@@ -9,7 +9,7 @@ else
 endif
 
 client_app: src/* res/*
-	@gcc -o client_app src/*.c $(GCCFLAGS) $(shell pkg-config --cflags --libs sdl2 SDL2_image)
+	@gcc -o client_app src/*/*.c $(GCCFLAGS) $(shell pkg-config --cflags --libs sdl2 SDL2_image)
 
 run: client_app
 	@./client_app

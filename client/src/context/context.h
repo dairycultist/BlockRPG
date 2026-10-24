@@ -1,5 +1,5 @@
-#ifndef IO_H
-#define IO_H
+#ifndef CONTEXT_H
+#define CONTEXT_H
 
 // exposes helpers for receiving player input, model manipulation and rendering, etc
 

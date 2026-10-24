@@ -1,6 +1,7 @@
-#include "main.h"
-#include "terrain.h"
+#include "logic.h"
 #include "player.h"
+
+#include "../terrain/terrain.h"
 
 #include <stdio.h>
 #include <math.h>
