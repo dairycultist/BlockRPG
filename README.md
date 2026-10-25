@@ -2,6 +2,30 @@
 
 Open source singleplayer voxel game written in C + OpenGL.
 
+## How to install
+
+### Dependencies
+
+This project depends on SDL2, SDL2 Image, and GLEW. Your system also needs to support OpenGL 3.2.
+
+Install those on **Ubuntu/Debian** with:
+
+```
+sudo apt install libsdl2-dev
+sudo apt install libsdl2-image-dev
+sudo apt install libglew-dev
+```
+
+I don't know what you need for other systems, use homebrew on mac or smth idk look it up
+
+### Build
+
+```
+git clone https://github.com/dairycultist/BlockRPG/
+cd BlockRPG/client
+make run
+```
+
 ## References
 
 I like the medieval fantasy vibe of Minecraft, so I wanna lean into that. I also like the old console-edition crafting menu (couch gaming omg)
