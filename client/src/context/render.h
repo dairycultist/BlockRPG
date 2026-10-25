@@ -1,9 +1,19 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include "../util/util.h"
+
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+
+// hardcoded values of near plane = 0.01, far plane = 100
+#define PROJ_MATRIX (GLfloat[][4]) {\
+    { WINDOW_HEIGHT / (float) WINDOW_WIDTH / tan(FOV * M_PI / 360.0), 0, 0, 0 },\
+    { 0, 1.0 / tan(FOV * M_PI / 360.0), 0, 0 },\
+    { 0, 0, -1.00020002, -1.0 },\
+    { 0, 0, -0.0200020002, 0 }\
+}
 
 typedef struct {
 
@@ -20,10 +30,18 @@ typedef struct {
 
 } MeshGL;
 
-// helper implemented by render.c
+// helpers implemented by render.c
 void create_shader_program(GLuint *const program_out, const char *vertex_code, const char *fragment_code);
+void mat4_mult(const GLfloat b[4][4], const GLfloat a[4][4], GLfloat out[4][4]);
+void generate_rotation_matrices(GLfloat pitch_matrix[4][4], float pitch, GLfloat yaw_matrix[4][4], float yaw);
+
+// implemented by render_3D.c
+void initialize_render_3D();
 
 // implemented by render_sky.c
 void initialize_render_sky();
+
+// implemented by render_2D.c
+void initialize_render_2D();
 
 #endif

@@ -50,22 +50,30 @@ void present();
  */
 void initialize_render();
 
-// textures
 Texture load_texture(const char *path);
 void free_texture(Texture texture);
 
-// 3D meshes
+void mesh_set_texture(Mesh mesh, Texture texture);
+void free_mesh(Mesh mesh);
+
+/*
+ * implemented by render_3D.c
+ */
 Mesh create_mesh(const unsigned char *mesh_data, const int mesh_bytecount, const int mesh_vertcount, Texture texture);
 Mesh create_mesh_from_obj(const char *obj_path, Texture texture);
 void draw_mesh(const Transform *camera, const Transform *transform, const Mesh mesh);
 void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v);
 void remesh_mesh(Mesh mesh, const unsigned char *mesh_data, const int mesh_bytecount, const int mesh_vertcount);
 
-// sky meshes
+/*
+ * implemented by render_sky.c
+ */
 Mesh create_sky_mesh();
 void draw_sky_mesh(const Transform *camera, const Mesh mesh);
 
-// 2D meshes
+/*
+ * implemented by render_2D.c
+ */
 //   x/y [0, texture w/h]          | the position in the texture to sample from
 //   width/height [0, texture w/h] | the size of the area to sample from
 //   u/v [-1, 1]                   | the screen UV where the anchor should be aligned
@@ -80,9 +88,5 @@ void sprite_mesh_window_pos_to_texture_pos(const Mesh mesh, int window_x, int wi
 
 // TODO for determining where to render item icons
 void sprite_mesh_texture_pos_to_window_uv(const Mesh mesh, int texture_x, int texture_y, int *window_u, int *window_v);
-
-// misc
-void mesh_set_texture(Mesh mesh, Texture texture);
-void free_mesh(Mesh mesh);
 
 #endif
