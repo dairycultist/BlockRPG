@@ -1,23 +1,9 @@
 #include "context.h"
 #include "render.h"
 
-void create_shader_program(GLuint *const program_out, const char *vertex_code, const char *fragment_code) {
-
-	*program_out = glCreateProgram();
-
-	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, (const char *const *) &vertex_code, NULL);
-	glCompileShader(vertex_shader);
-	glAttachShader(*program_out, vertex_shader);
-
-	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, (const char *const *) &fragment_code, NULL);
-	glCompileShader(fragment_shader);
-	glAttachShader(*program_out, fragment_shader);
-
-	glLinkProgram(*program_out);
-}
-
+/*
+ * implemented for context.h
+ */
 void initialize_render() {
 
 	initialize_render_3D();
@@ -92,6 +78,27 @@ void free_mesh(Mesh mesh) {
 
 	glDeleteVertexArrays(1, &((MeshGL *) mesh)->vertex_array);
 	free(mesh);
+}
+
+/*
+ * implemented for render.h
+ * helpers for the various render_*.c files
+ */
+void create_shader_program(GLuint *const program_out, const char *vertex_code, const char *fragment_code) {
+
+	*program_out = glCreateProgram();
+
+	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex_shader, 1, (const char *const *) &vertex_code, NULL);
+	glCompileShader(vertex_shader);
+	glAttachShader(*program_out, vertex_shader);
+
+	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment_shader, 1, (const char *const *) &fragment_code, NULL);
+	glCompileShader(fragment_shader);
+	glAttachShader(*program_out, fragment_shader);
+
+	glLinkProgram(*program_out);
 }
 
 void mat4_mult(const GLfloat b[4][4], const GLfloat a[4][4], GLfloat out[4][4]) {
