@@ -302,7 +302,7 @@ void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v) {
 	mat4_mult(translation_matrix, PROJ_MATRIX, position_matrix);
 	mat4_mult(position_matrix, view_matrix, position_matrix);
 
-	// load the 3D shader program and the uniforms we just calculated
+	// load the 3D shader program with the uniform we just calculated
 	glUseProgram(shader3DIcon_program);
 	glUniformMatrix4fv(glGetUniformLocation(shader3DIcon_program, "position_matrix"), 1, GL_FALSE, &position_matrix[0][0]);
 

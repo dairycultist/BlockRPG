@@ -3,11 +3,12 @@
 
 static const char *vertex2D =
 "#version 150 core\n"
+"uniform mat4 position_matrix;\n"
 "in vec2 position;\n"
 "in vec2 UV;\n"
 "out vec2 frag_UV;\n"
 "void main() {\n"
-    "gl_Position = vec4(position.xy, -1.0, 1.0);\n" // get final position
+    "gl_Position = position_matrix * vec4(position.xy, -1.0, 1.0);\n" // get final position
     "frag_UV = UV;\n" // pass along UV
 "}";
 
@@ -27,20 +28,20 @@ void initialize_render_2D() {
     create_shader_program(&shader2D_program, vertex2D, fragment2D);
 }
 
-Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
 
 	// I know I know, the variable names here suck fat nuts
 
 	const float w = h_pixels / (float) WINDOW_WIDTH * width / height;
 	const float h = h_pixels / (float) WINDOW_HEIGHT;
 
-	u -= anchor_u * w;
-	v -= anchor_v * h;
+	const float u = -anchor_u * w;
+	const float v = -anchor_v * h;
 
-	float sample_u1 = x            / (float) ((TextureGL *) texture)->w;
-	float sample_v1 = y            / (float) ((TextureGL *) texture)->h;
-	float sample_u2 = (x + width)  / (float) ((TextureGL *) texture)->w;
-	float sample_v2 = (y + height) / (float) ((TextureGL *) texture)->h;
+	const float sample_u1 = x            / (float) ((TextureGL *) texture)->w;
+	const float sample_v1 = y            / (float) ((TextureGL *) texture)->h;
+	const float sample_u2 = (x + width)  / (float) ((TextureGL *) texture)->w;
+	const float sample_v2 = (y + height) / (float) ((TextureGL *) texture)->h;
 
 	const float mesh_data[] = {
 		u,     v,     sample_u1, sample_v1,
@@ -86,19 +87,27 @@ Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float u
 	return mesh_gl;
 }
 
-Mesh create_sprite_mesh(float u, float v, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+Mesh create_sprite_mesh(float anchor_u, float anchor_v, int h_pixels, Texture texture) {
 	
-	create_sprite_mesh_from_matrix(0, 0, ((TextureGL *) texture)->w, ((TextureGL *) texture)->h, u, v, anchor_u, anchor_v, h_pixels, texture);
+	create_sprite_mesh_from_matrix(0, 0, ((TextureGL *) texture)->w, ((TextureGL *) texture)->h, anchor_u, anchor_v, h_pixels, texture);
 }
 
-void draw_sprite_mesh(const Mesh mesh) {
+void draw_sprite_mesh(const Mesh mesh, float screen_u, float screen_v) {
+
+	GLfloat translation_matrix[4][4] = {
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{screen_u, screen_v, 0, 1}
+	};
 
 	// bind the mesh's vertex mesh and texture
 	glBindVertexArray(((MeshGL *) mesh)->vertex_array);
 	glBindTexture(GL_TEXTURE_2D, ((MeshGL *) mesh)->texture_gl->obj);
 
-	// load the 2D shader program
+	// load the 2D shader program with the uniform we just calculated
 	glUseProgram(shader2D_program);
+	glUniformMatrix4fv(glGetUniformLocation(shader2D_program, "position_matrix"), 1, GL_FALSE, &translation_matrix[0][0]);
 
 	// draw
 	glEnable(GL_BLEND);

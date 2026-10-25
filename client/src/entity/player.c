@@ -29,7 +29,7 @@ static Mesh crosshair_mesh;
 static Texture crosshair_textures[9];
 static Mesh sky_mesh;
 static Mesh test_icon_mesh;
-static Mesh inventory_mesh, hotbar_mesh;
+static Mesh inventory_mesh, hotbar_mesh, hotbar_selection_mesh;
 
 static int in_menu;
 
@@ -50,16 +50,18 @@ void initialize_player() {
 	crosshair_textures[6] = load_texture("res/crosshair_6.png");
 	crosshair_textures[7] = load_texture("res/crosshair_7.png");
 	crosshair_textures[8] = load_texture("res/crosshair_8.png");
-	crosshair_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 64, crosshair_textures[0]);
+	crosshair_mesh = create_sprite_mesh(0.5f, 0.5f, 64, crosshair_textures[0]);
 
 	sky_mesh = create_sky_mesh();
 
 	test_icon_mesh = create_mesh_from_obj("res/biped.obj", load_texture("res/biped_jenny.png"));
 
-	inventory_mesh = create_sprite_mesh(0.0f, 0.0f, 0.5f, 0.5f, 256 * GUI_SCALE, load_texture("res/inventory.png"));
+	inventory_mesh = create_sprite_mesh(0.5f, 0.5f, 256 * GUI_SCALE, load_texture("res/inventory.png"));
 
 	// TODO                                         VVV this is not ideal (should be 0) but idk how to fix it rn
-	hotbar_mesh = create_sprite_mesh_from_matrix(0, 256 - 29, 210, 29, 0.0f, -1.0f, 0.5f, 0.0f, 29 * GUI_SCALE, load_texture("res/hud.png"));
+	hotbar_mesh = create_sprite_mesh_from_matrix(0, 256 - 29, 210, 29, 0.5f, 0.0f, 29 * GUI_SCALE, load_texture("res/hud.png"));
+
+	hotbar_selection_mesh = create_sprite_mesh(0.5f, 0.07f, 32 * GUI_SCALE, load_texture("res/hud_select.png"));
 }
 
 void player_process_tick(Input *input) {
@@ -225,12 +227,13 @@ void player_process_tick(Input *input) {
 
 	// draw UI
 	if (in_menu) {
-		draw_sprite_mesh(inventory_mesh);
+		draw_sprite_mesh(inventory_mesh, 0.0, 0.0);
 	} else {
-		draw_sprite_mesh(crosshair_mesh);
+		draw_sprite_mesh(crosshair_mesh, 0.0, 0.0);
 	}
 
-	draw_sprite_mesh(hotbar_mesh);
+	draw_sprite_mesh(hotbar_mesh, 0.0, -1.0);
+	draw_sprite_mesh(hotbar_selection_mesh, 0.0, -1.0);
 
 	draw_mesh_as_icon(test_icon_mesh, 0.0f, -1.0f);
 }
