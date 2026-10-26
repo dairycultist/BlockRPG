@@ -13,12 +13,19 @@
 
 typedef struct {
 
-    // the following are only populated if the cursor is DISABLED, otherwise they are 0
+    /*
+     * the following are only populated if the cursor is DISABLED, otherwise they are 0 (unless otherwise specified)
+     */
+    int hotbar_select; // -1 unless one of the number keys are pressed
+    int hotbar_delta; // 0 unless a "left" or "right" key are pressed, in which case it's -1 or 1, respectively
+
     int camera_dx, camera_dy;
     int left, right, forward, backward, up, down;
-    int attack, use; // maybe change to primary and secondary
+    int attack, use;
 
-    // the following are only populated if the cursor is ENABLED, otherwise they are 0
+    /*
+     * the following are only populated if the cursor is ENABLED, otherwise they are 0
+     */
     int menu_toggle; // toggling out of a menu, toggling into inventory (which is also the pause menu), etc
     int cursor_x, cursor_y;
     int cursor_toggle, cursor_alt_toggle;

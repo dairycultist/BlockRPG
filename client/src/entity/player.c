@@ -66,6 +66,12 @@ void initialize_player() {
 
 void player_process_tick(Input *input) {
 
+	// test
+	if (input->hotbar_select != -1)
+		printf("select: %d\n", input->hotbar_select);
+	if (input->hotbar_delta)
+		printf("delta: %d\n", input->hotbar_delta);
+
 	if (input->menu_toggle) {
 
 		in_menu = !in_menu;

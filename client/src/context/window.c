@@ -86,6 +86,9 @@ void populate_input(Input *input) {
 		input->cursor_y = 0;
 	}
 
+	input->hotbar_select = -1;
+	input->hotbar_delta = 0;
+
     input->camera_dx = 0.0;
     input->camera_dy = 0.0;
 
@@ -124,18 +127,25 @@ void populate_input(Input *input) {
 			
 			} else if (!is_cursor_enabled) {
 
-				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
-					input->left = 1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
-					input->right = 1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
-					input->forward = 1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
-					input->backward = 1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-					input->up = 1;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-					input->down = 1;
+				switch (event.key.keysym.scancode) {
+					case SDL_SCANCODE_A: input->left = 1; break;
+					case SDL_SCANCODE_D: input->right = 1; break;
+					case SDL_SCANCODE_W: input->forward = 1; break;
+					case SDL_SCANCODE_S: input->backward = 1; break;
+					case SDL_SCANCODE_SPACE: input->up = 1; break;
+					case SDL_SCANCODE_LSHIFT: input->down = 1; break;
+					case SDL_SCANCODE_MINUS: input->hotbar_delta = -1; break;
+					case SDL_SCANCODE_EQUALS: input->hotbar_delta = 1; break;
+					case SDL_SCANCODE_1: input->hotbar_select = 0; break;
+					case SDL_SCANCODE_2: input->hotbar_select = 1; break;
+					case SDL_SCANCODE_3: input->hotbar_select = 2; break;
+					case SDL_SCANCODE_4: input->hotbar_select = 3; break;
+					case SDL_SCANCODE_5: input->hotbar_select = 4; break;
+					case SDL_SCANCODE_6: input->hotbar_select = 5; break;
+					case SDL_SCANCODE_7: input->hotbar_select = 6; break;
+					case SDL_SCANCODE_8: input->hotbar_select = 7; break;
+					case SDL_SCANCODE_9: input->hotbar_select = 8; break;
+					case SDL_SCANCODE_0: input->hotbar_select = 9; break;
 				}
 			}
 
@@ -143,18 +153,13 @@ void populate_input(Input *input) {
 
 			if (!is_cursor_enabled) {
 
-				if (event.key.keysym.scancode == SDL_SCANCODE_A) {
-					input->left = 0;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_D) {
-					input->right = 0;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_W) {
-					input->forward = 0;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_S) {
-					input->backward = 0;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-					input->up = 0;
-				} else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-					input->down = 0;
+				switch (event.key.keysym.scancode) {
+					case SDL_SCANCODE_A: input->left = 0; break;
+					case SDL_SCANCODE_D: input->right = 0; break;
+					case SDL_SCANCODE_W: input->forward = 0; break;
+					case SDL_SCANCODE_S: input->backward = 0; break;
+					case SDL_SCANCODE_SPACE: input->up = 0; break;
+					case SDL_SCANCODE_LSHIFT: input->down = 0; break;
 				}
 			}
 
