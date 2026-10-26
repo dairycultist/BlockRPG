@@ -47,6 +47,9 @@ typedef void *Mesh;
  */
 void initialize_window();
 
+int get_window_width();
+int get_window_height();
+
 int game_is_running();
 void set_cursor_enabled(int boolean);
 void populate_input(Input *input);

@@ -9,6 +9,8 @@ static SDL_Window *window;
 static int running = 1;
 static int is_cursor_enabled;
 
+static int window_w = WINDOW_WIDTH, window_h = WINDOW_HEIGHT;
+
 static void log_error(const char *msg) {
 	
 	if (strlen(SDL_GetError()) == 0) {
@@ -31,7 +33,7 @@ void initialize_window() {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-	window = SDL_CreateWindow("CinnamonCraft", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
+	window = SDL_CreateWindow("CinnamonCraft", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
 	if (!window) {
         log_error("Could not create window");
@@ -52,6 +54,16 @@ void initialize_window() {
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
+int get_window_width() {
+
+	return window_w;
+}
+
+int get_window_height() {
+
+	return window_h;
+}
+
 int game_is_running() {
 
     return running;
@@ -64,7 +76,7 @@ void set_cursor_enabled(int boolean) {
 	SDL_SetRelativeMouseMode(!boolean);
 
 	if (boolean)
-		SDL_WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
+		SDL_WarpMouseInWindow(window, window_w / 2, window_h / 2);
 }
 
 void populate_input(Input *input) {
@@ -105,6 +117,13 @@ void populate_input(Input *input) {
         if (event.type == SDL_QUIT) {
 
             running = 0;
+
+		} else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+
+			window_w = event.window.data1;
+			window_h = event.window.data2;
+
+			glViewport(0, 0, window_w, window_h);
         
         } else if (event.type == SDL_MOUSEMOTION) {
 

@@ -7,14 +7,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-// hardcoded values of near plane = 0.01, far plane = 100
-#define PROJ_MATRIX (GLfloat[][4]) {\
-    { WINDOW_HEIGHT / (float) WINDOW_WIDTH / tan(FOV * M_PI / 360.0), 0, 0, 0 },\
-    { 0, 1.0 / tan(FOV * M_PI / 360.0), 0, 0 },\
-    { 0, 0, -1.00020002, -1.0 },\
-    { 0, 0, -0.0200020002, 0 }\
-}
-
 typedef struct {
 
 	int w, h;
