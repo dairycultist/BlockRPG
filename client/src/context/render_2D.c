@@ -28,28 +28,21 @@ void initialize_render_2D() {
     create_shader_program(&shader2D_program, vertex2D, fragment2D);
 }
 
-Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+Mesh create_sprite_mesh_from_matrix(int sample_x, int sample_y, int sample_w, int sample_h, float anchor_u, float anchor_v, Texture texture) {
 
-	// I know I know, the variable names here suck fat nuts
+	const float sample_u1 = sample_x              / (float) ((TextureGL *) texture)->w;
+	const float sample_v1 = sample_y              / (float) ((TextureGL *) texture)->h;
+	const float sample_u2 = (sample_x + sample_w) / (float) ((TextureGL *) texture)->w;
+	const float sample_v2 = (sample_y + sample_h) / (float) ((TextureGL *) texture)->h;
 
-	const float w = h_pixels / (float) WINDOW_WIDTH * width / height;
-	const float h = h_pixels / (float) WINDOW_HEIGHT;
-
-	const float u = -anchor_u * w;
-	const float v = -anchor_v * h;
-
-	const float sample_u1 = x            / (float) ((TextureGL *) texture)->w;
-	const float sample_v1 = y            / (float) ((TextureGL *) texture)->h;
-	const float sample_u2 = (x + width)  / (float) ((TextureGL *) texture)->w;
-	const float sample_v2 = (y + height) / (float) ((TextureGL *) texture)->h;
-
+	// sprite mesh position data is in PIXEL space, with 0,0 being the anchor
 	const float mesh_data[] = {
-		u,     v,     sample_u1, sample_v1,
-		u + w, v,     sample_u2, sample_v1,
-		u,     v + h, sample_u1, sample_v2,
-		u + w, v,     sample_u2, sample_v1,
-		u + w, v + h, sample_u2, sample_v2,
-		u,     v + h, sample_u1, sample_v2
+		sample_w *      - anchor_u , sample_h *      - anchor_v , sample_u1, sample_v1,
+		sample_w * (1.0 - anchor_u), sample_h *      - anchor_v , sample_u2, sample_v1,
+		sample_w *      - anchor_u , sample_h * (1.0 - anchor_v), sample_u1, sample_v2,
+		sample_w * (1.0 - anchor_u), sample_h *      - anchor_v , sample_u2, sample_v1,
+		sample_w * (1.0 - anchor_u), sample_h * (1.0 - anchor_v), sample_u2, sample_v2,
+		sample_w *      - anchor_u , sample_h * (1.0 - anchor_v), sample_u1, sample_v2
 	};
 
 	static const int mesh_vertcount = 6;
@@ -87,19 +80,44 @@ Mesh create_sprite_mesh_from_matrix(int x, int y, int width, int height, float a
 	return mesh_gl;
 }
 
-Mesh create_sprite_mesh(float anchor_u, float anchor_v, int h_pixels, Texture texture) {
+Mesh create_sprite_mesh(float anchor_u, float anchor_v, Texture texture) {
 	
-	create_sprite_mesh_from_matrix(0, 0, ((TextureGL *) texture)->w, ((TextureGL *) texture)->h, anchor_u, anchor_v, h_pixels, texture);
+	create_sprite_mesh_from_matrix(0, 0, ((TextureGL *) texture)->w, ((TextureGL *) texture)->h, anchor_u, anchor_v, texture);
 }
 
-void draw_sprite_mesh(const Mesh mesh, float screen_u, float screen_v) {
+void draw_sprite_mesh(const Mesh mesh, float screen_u, float screen_v, int pixel_dx, int pixel_dy) {
 
-	GLfloat translation_matrix[4][4] = {
+	/*
+	* before drawing, a position matrix is calculated that scales the pixel
+	* space to UV space (using the GUI_SCALE and current window size) and
+	* applies the UV and pixel anchor translations.
+	*/
+	GLfloat pixel_translation_matrix[4][4] = {
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{pixel_dx, pixel_dy, 0, 1}
+	};
+
+	GLfloat scale_matrix[4][4] = {
+		{GUI_SCALE * 2.0 / get_window_width(), 0, 0, 0},
+		{0, GUI_SCALE * 2.0 / get_window_height(), 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1}
+	};
+
+	GLfloat screen_translation_matrix[4][4] = {
 		{1, 0, 0, 0},
 		{0, 1, 0, 0},
 		{0, 0, 1, 0},
 		{screen_u, screen_v, 0, 1}
 	};
+
+	// final position matrix
+	GLfloat position_matrix[4][4];
+
+	mat4_mult(screen_translation_matrix, scale_matrix, position_matrix);
+	mat4_mult(position_matrix, pixel_translation_matrix, position_matrix);
 
 	// bind the mesh's vertex mesh and texture
 	glBindVertexArray(((MeshGL *) mesh)->vertex_array);
@@ -107,7 +125,7 @@ void draw_sprite_mesh(const Mesh mesh, float screen_u, float screen_v) {
 
 	// load the 2D shader program with the uniform we just calculated
 	glUseProgram(shader2D_program);
-	glUniformMatrix4fv(glGetUniformLocation(shader2D_program, "position_matrix"), 1, GL_FALSE, &translation_matrix[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shader2D_program, "position_matrix"), 1, GL_FALSE, &position_matrix[0][0]);
 
 	// draw
 	glEnable(GL_BLEND);
