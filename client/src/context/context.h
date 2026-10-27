@@ -72,7 +72,7 @@ void free_mesh(Mesh mesh);
 Mesh create_mesh(const unsigned char *mesh_data, const int mesh_bytecount, const int mesh_vertcount, Texture texture);
 Mesh create_mesh_from_obj(const char *obj_path, Texture texture);
 void draw_mesh(const Transform *camera, const Transform *transform, const Mesh mesh);
-void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v);
+void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v, int pixel_dx, int pixel_dy);
 void remesh_mesh(Mesh mesh, const unsigned char *mesh_data, const int mesh_bytecount, const int mesh_vertcount);
 
 /*

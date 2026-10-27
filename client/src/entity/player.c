@@ -251,7 +251,9 @@ void player_process_tick(Input *input) {
 	}
 
 	draw_sprite_mesh(hotbar_mesh, 0.0, -1.0, 0, 0);
-	draw_sprite_mesh(hotbar_selection_mesh, 0.0, -1.0, -90 + 20 * hotbar_i, -2);
 
-	draw_mesh_as_icon(test_icon_mesh, 0.0f, -1.0f);
+	int slot_offset = -90 + 20 * hotbar_i;
+
+	draw_sprite_mesh(hotbar_selection_mesh, 0.0, -1.0, slot_offset, -2);
+	draw_mesh_as_icon(test_icon_mesh, 0.0f, -1.0f, slot_offset, 0);
 }

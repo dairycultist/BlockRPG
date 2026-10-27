@@ -282,33 +282,38 @@ void draw_mesh(const Transform *camera, const Transform *transform, const Mesh m
 	glDrawArrays(GL_TRIANGLES, 0, ((MeshGL *) mesh)->vertex_count);
 }
 
-void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v) {
+void draw_mesh_as_icon(const Mesh mesh, float screen_u, float screen_v, int pixel_dx, int pixel_dy) {
 
 	// bind the mesh's vertex mesh and texture
 	glBindVertexArray(((MeshGL *) mesh)->vertex_array);
 	glBindTexture(GL_TEXTURE_2D, ((MeshGL *) mesh)->texture_gl->obj);
 
-	// model matrix (moves the model away from the camera and shrinks it)
-	GLfloat view_matrix[4][4] = {
+	// model matrix (makes the model really tiny and just a little bit away from the camera
+	// because I can't disable depth testing and I don't want to create a separate buffer
+	// to render to first)
+	GLfloat model_matrix[4][4] = {
 		{0.01, 0, 0, 0},
 		{0, 0.01, 0, 0},
 		{0, 0, 0.01, 0},
 		{0, 0, -0.2, 1}
 	};
 
-	// translation matrix (applied after projection matrix to position the icon in 2D screen space)
-	GLfloat translation_matrix[4][4] = {
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
+	// scale matrix (scales the model after projection, so that scaling doesn't effect perspective)
+	float scale = 1000.0 / get_window_height();
+	
+	GLfloat scale_matrix[4][4] = {
+		{scale, 0, 0, 0},
+		{0, scale, 0, 0},
 		{0, 0, 1, 0},
-		{screen_u, screen_v, 0, 1}
+		{0, 0, 0, 1}
 	};
 
 	// final position matrix
 	GLfloat position_matrix[4][4];
 
-	mat4_mult(translation_matrix, PROJ_MATRIX, position_matrix);
-	mat4_mult(position_matrix, view_matrix, position_matrix);
+	mat4_mult(scale_matrix, PROJ_MATRIX, position_matrix);
+	mat4_mult(position_matrix, model_matrix, position_matrix);
+	mat4_translate(position_matrix, screen_u + pixel_dx * GUI_SCALE * 2.0 / get_window_width(), screen_v + pixel_dy * GUI_SCALE * 2.0 / get_window_height(), 0.0);
 
 	// load the 3D shader program with the uniform we just calculated
 	glUseProgram(shader3DIcon_program);
