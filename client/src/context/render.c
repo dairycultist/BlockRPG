@@ -141,6 +141,16 @@ void mat4_mult(const GLfloat b[4][4], const GLfloat a[4][4], GLfloat out[4][4]) 
 	}
 }
 
+void mat4_translate(GLfloat mat[4][4], float dx, float dy, float dz) {
+
+	for (int i = 0; i < 4; i++) {
+
+		mat[i][0] += mat[i][3] * dx;
+		mat[i][1] += mat[i][3] * dy;
+		mat[i][2] += mat[i][3] * dz;
+	}
+}
+
 void generate_rotation_matrices(GLfloat pitch_matrix[4][4], float pitch, GLfloat yaw_matrix[4][4], float yaw) {
 
 	pitch_matrix[0][0] = 1;

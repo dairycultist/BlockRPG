@@ -106,18 +106,11 @@ void draw_sprite_mesh(const Mesh mesh, float screen_u, float screen_v, int pixel
 		{0, 0, 0, 1}
 	};
 
-	GLfloat screen_translation_matrix[4][4] = {
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
-		{0, 0, 1, 0},
-		{screen_u, screen_v, 0, 1}
-	};
-
 	// final position matrix
 	GLfloat position_matrix[4][4];
 
-	mat4_mult(screen_translation_matrix, scale_matrix, position_matrix);
-	mat4_mult(position_matrix, pixel_translation_matrix, position_matrix);
+	mat4_mult(scale_matrix, pixel_translation_matrix, position_matrix);
+	mat4_translate(position_matrix, screen_u, screen_v, 0.0);
 
 	// bind the mesh's vertex mesh and texture
 	glBindVertexArray(((MeshGL *) mesh)->vertex_array);

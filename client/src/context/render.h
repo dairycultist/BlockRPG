@@ -25,6 +25,7 @@ typedef struct {
 // helpers implemented by render.c
 void create_shader_program(GLuint *const program_out, const char *vertex_code, const char *fragment_code);
 void mat4_mult(const GLfloat b[4][4], const GLfloat a[4][4], GLfloat out[4][4]);
+void mat4_translate(GLfloat mat[4][4], float dx, float dy, float dz);
 void generate_rotation_matrices(GLfloat pitch_matrix[4][4], float pitch, GLfloat yaw_matrix[4][4], float yaw);
 
 // implemented by render_3D.c
