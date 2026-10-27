@@ -33,6 +33,8 @@ static Mesh inventory_mesh, hotbar_mesh, hotbar_selection_mesh;
 
 static int in_menu;
 
+static int hotbar_i = 0;
+
 void initialize_player() {
 
 	// position player
@@ -66,18 +68,28 @@ void initialize_player() {
 
 void player_process_tick(Input *input) {
 
-	// test
+	// changing selected hotbar slot
 	if (input->hotbar_select != -1)
-		printf("select: %d\n", input->hotbar_select);
-	if (input->hotbar_delta)
-		printf("delta: %d\n", input->hotbar_delta);
+		hotbar_i = input->hotbar_select;
 
+	if (input->hotbar_delta) {
+
+		hotbar_i += input->hotbar_delta;
+
+		if (hotbar_i < 0)
+			hotbar_i = 9;
+		else if (hotbar_i > 9)
+			hotbar_i = 0;
+	}
+
+	// opening/closing menu
 	if (input->menu_toggle) {
 
 		in_menu = !in_menu;
 		set_cursor_enabled(in_menu);
 	}
 
+	// clicking (test)
 	if (input->cursor_toggle)
 		printf("clicked at %d, %d\n", input->cursor_x, input->cursor_y);
 
@@ -239,7 +251,7 @@ void player_process_tick(Input *input) {
 	}
 
 	draw_sprite_mesh(hotbar_mesh, 0.0, -1.0, 0, 0);
-	draw_sprite_mesh(hotbar_selection_mesh, 0.0, -1.0, 0, -2);
+	draw_sprite_mesh(hotbar_selection_mesh, 0.0, -1.0, -90 + 20 * hotbar_i, -2);
 
 	draw_mesh_as_icon(test_icon_mesh, 0.0f, -1.0f);
 }
